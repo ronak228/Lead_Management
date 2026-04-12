@@ -1,0 +1,11 @@
+@model InquiryFormViewModel
+@{ ViewData["Title"] = "Edit Inquiry"; }
+
+<div class="page-header">
+    <h4>Edit Inquiry</h4>
+    <p>Update the details for <strong>@Model.Inquiry.HotelName</strong></p>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Inquiry.Id" method="post">
+    @await Html.PartialAsync("_Form", Model)
+</form>

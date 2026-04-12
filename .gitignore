@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.log
+
+## Rider
+.idea/
+
+## Publish
+publish/
+out/
+
+## Environment / secrets
+appsettings.Development.json
+*.pfx
+*.pem
+
+## OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,132 @@
+@model PaymentFormViewModel
+@{ ViewData["Title"] = Model.Client != null ? $"Add Payment – {Model.Client.CompanyName}" : "Add Payment"; }
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>Add Payment</h4>
+        <p>@(Model.Client != null ? $"Recording payment for {Model.Client.CompanyName} ({Model.Client.ClientRef})" : "Record a new payment")</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header-clean">
+                    <h6><i class="bi bi-cash-coin me-2" style="color:var(--brand);"></i>Payment Details</h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Client != null)
+                    {
+                        <input type="hidden" name="Payment.ClientId" value="@Model.Payment.ClientId" />
+                        <div class="alert alert-light border mb-4 py-3 px-3" style="font-size:.83rem;">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <strong>@Model.Client.CompanyName</strong>
+                                    <span class="text-muted ms-2" style="font-family:monospace;">@Model.Client.ClientRef</span>
+                                </div>
+                                <div>
+                                    <span style="color:var(--text-muted);">Contract:</span>
+                                    <strong>₹@Model.Client.TotalAmount.ToString("N0")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Client <span class="text-danger">*</span></label>
+                            <input type="number" name="Payment.ClientId" value="@Model.Payment.ClientId" class="form-control" placeholder="Client ID" min="1" required />
+                        </div>
+                    }
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+                            <input type="number" name="Payment.Amount" value="@Model.Payment.Amount"
+                                   class="form-control" placeholder="0.00" min="1" step="0.01" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" name="Payment.PaymentDate"
+                                   value="@Model.Payment.PaymentDate.ToString("yyyy-MM-dd")"
+                                   class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Mode <span class="text-danger">*</span></label>
+                            <select name="Payment.PaymentMode" class="form-select" id="paymentMode">
+                                <option value="Cash"   selected="@(Model.Payment.PaymentMode=="Cash")">Cash</option>
+                                <option value="Cheque" selected="@(Model.Payment.PaymentMode=="Cheque")">Cheque</option>
+                                <option value="Online" selected="@(Model.Payment.PaymentMode=="Online")">Online Transfer</option>
+                            </select>
+                        </div>
+                        <!-- Cheque fields (shown when mode=Cheque) -->
+                        <div class="col-md-6" id="fieldCheque">
+                            <label class="form-label">Cheque Number</label>
+                            <input type="text" name="Payment.ChequeNo" value="@Model.Payment.ChequeNo"
+                                   class="form-control" placeholder="Cheque #" />
+                        </div>
+                        <!-- Online fields (shown when mode=Online) -->
+                        <div class="col-md-6" id="fieldTransaction">
+                            <label class="form-label">Transaction ID</label>
+                            <input type="text" name="Payment.TransactionId" value="@Model.Payment.TransactionId"
+                                   class="form-control" placeholder="UTR / Transaction ID" />
+                        </div>
+                        <div class="col-md-6" id="fieldBank">
+                            <label class="form-label">Bank Name</label>
+                            <input type="text" name="Payment.BankName" value="@Model.Payment.BankName"
+                                   class="form-control" placeholder="e.g. HDFC Bank" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Note</label>
+                            <input type="text" name="Payment.Note" value="@Model.Payment.Note"
+                                   class="form-control" placeholder="e.g. 1st instalment…" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Payment Proof <span class="text-muted" style="font-size:.76rem;">(JPG/PNG/PDF, max 2MB)</span></label>
+                            <input type="file" name="proofFile" class="form-control" accept=".jpg,.jpeg,.png,.pdf" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body p-4 d-flex flex-column gap-2">
+                    <button type="submit" class="btn btn-brand py-2" style="font-size:.86rem;font-weight:600;">
+                        <i class="bi bi-check me-1"></i>Save Payment
+                    </button>
+                    @if (Model.Client != null)
+                    {
+                        <a asp-controller="Client" asp-action="Details" asp-route-id="@Model.Client.Id"
+                           class="btn btn-outline-secondary py-2" style="font-size:.84rem;">Cancel</a>
+                    }
+                    else
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary py-2" style="font-size:.84rem;">Cancel</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+(function(){
+    var modeEl = document.getElementById('paymentMode');
+    var cheque = document.getElementById('fieldCheque');
+    var txn    = document.getElementById('fieldTransaction');
+    var bank   = document.getElementById('fieldBank');
+    function update(){
+        var m = modeEl.value;
+        cheque.style.display = m === 'Cheque' ? '' : 'none';
+        txn.style.display    = m === 'Online' ? '' : 'none';
+        bank.style.display   = (m === 'Cheque' || m === 'Online') ? '' : 'none';
+    }
+    modeEl.addEventListener('change', update);
+    update();
+})();
+</script>

@@ -1,0 +1,164 @@
+@model ClientListViewModel
+@{ ViewData["Title"] = "Clients"; }
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>Clients</h4>
+        <p>Manage all client companies</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Export" asp-route-search="@Model.Search" asp-route-filterStatus="@Model.FilterStatus"
+           class="btn btn-outline-success px-3" style="font-size:.83rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export
+        </a>
+        <a asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
+            <i class="bi bi-plus me-1"></i>New Client
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3 px-4">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+            <div style="min-width:220px;flex:1;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-right:none;">
+                        <i class="bi bi-search text-muted" style="font-size:.8rem;"></i>
+                    </span>
+                    <input type="text" name="search" value="@Model.Search"
+                           class="form-control" style="border-left:none;"
+                           placeholder="Company, contact, phone, refâ€¦" />
+                </div>
+            </div>
+            <div style="min-width:140px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Status</label>
+                <select name="filterStatus" class="form-select">
+                    <option value="">All</option>
+                    <option value="active"   selected="@(Model.FilterStatus=="active")">Active</option>
+                    <option value="inactive" selected="@(Model.FilterStatus=="inactive")">Inactive</option>
+                </select>
+            </div>
+            <div class="d-flex gap-2 align-self-end">
+                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header-clean">
+        <h6><i class="bi bi-person-lines-fill me-2" style="color:var(--brand);"></i>
+            All Clients
+            <span class="text-muted fw-normal" style="font-size:.76rem;">(@Model.Clients.Count records)</span>
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Clients.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
+                <span style="font-size:.84rem;">No clients found. <a asp-action="Create" style="color:var(--brand);">Add one</a></span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clean mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="table-mobile-hide">Ref</th>
+                            <th>Company</th>
+                            <th class="table-mobile-hide">Contact</th>
+                            <th>Phone</th>
+                            <th class="table-mobile-hide">Module</th>
+                            <th class="table-mobile-hide">Payment</th>
+                            <th>Status</th>
+                            <th class="table-mobile-hide">Added</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var c in Model.Clients)
+                        {
+                            <tr>
+                                <td class="text-muted">@sr</td>
+                                <td class="table-mobile-hide" style="font-size:.75rem;">
+                                    <span style="font-family:monospace;color:var(--brand);font-weight:600;">@c.ClientRef</span>
+                                </td>
+                                <td class="fw-500">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.77rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            @(c.CompanyName.Length > 0 ? c.CompanyName[0].ToString().ToUpper() : "?")
+                                        </div>
+                                        @c.CompanyName
+                                    </div>
+                                </td>
+                                <td class="table-mobile-hide" style="font-size:.83rem;">@c.ContactPerson</td>
+                                <td style="font-size:.8rem;">@c.Phone</td>
+                                <td class="table-mobile-hide" style="font-size:.8rem;">@(c.ModuleName ?? "â€”")</td>
+                                <td class="table-mobile-hide">
+                                    @{
+                                        var ps = c.PaymentStatus;
+                                        var psStyle = ps == "Paid" ? "background:#d1fae5;color:#065f46;" :
+                                                      ps == "Partial" ? "background:#fef3c7;color:#92400e;" :
+                                                      c.TotalAmount > 0 ? "background:#fee2e2;color:#991b1b;" : "background:#f3f4f6;color:#6b7280;";
+                                    }
+                                    <span style="@psStyle font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@ps</span>
+                                    @if (c.TotalAmount > 0)
+                                    {
+                                        <div style="font-size:.7rem;color:#6b7280;margin-top:2px;">@c.TotalPaid.ToString("N0") / @c.TotalAmount.ToString("N0")</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="@(c.IsActive ? "badge-active" : "badge-inactive")">
+                                        @(c.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td class="text-muted table-mobile-hide" style="font-size:.75rem;">@c.CreatedAt.ToString("dd MMM yy")</td>
+                                <td class="text-end">
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@c.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@c.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@c.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-primary" title="Add Payment">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </a>
+                                        <form asp-action="Toggle" asp-route-id="@c.Id" method="post" class="d-inline">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-sm-icon @(c.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                    title="@(c.IsActive ? "Deactivate" : "Activate")">
+                                                <i class="bi @(c.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
+                                            </button>
+                                        </form>
+                                        @if (SessionHelper.IsAdmin(Context.Session))
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Remove client @c.CompanyName?')">
+                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

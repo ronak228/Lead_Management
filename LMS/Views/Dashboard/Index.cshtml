@@ -1,0 +1,283 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    var userName       = ViewBag.UserName as string ?? "User";
+    var userRole       = ViewBag.UserRole as string ?? "User";
+    var recent         = ViewBag.RecentInquiries as List<Dictionary<string, object?>> ?? new();
+    var recentPayments = ViewBag.RecentPayments  as List<Dictionary<string, object?>> ?? new();
+    var isClient       = userRole == "Client";
+}
+
+<div class="page-header">
+    <h4>Good day, @userName</h4>
+    <p>Here''s a snapshot of your hotel lead pipeline</p>
+</div>
+
+@if (isClient)
+{
+    <!-- Client view -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-indigo">
+                <div class="stat-icon"><i class="bi bi-building"></i></div>
+                <div class="stat-value">@(ViewBag.CompanyName ?? "—")</div>
+                <div class="stat-label">@(ViewBag.ClientRef ?? "")</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-green">
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value">₹@(((decimal?)ViewBag.TotalPaid ?? 0).ToString("N0"))</div>
+                <div class="stat-label">Amount Paid</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-rose">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-value">₹@(((decimal?)ViewBag.Remaining ?? 0).ToString("N0"))</div>
+                <div class="stat-label">Remaining</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-amber">
+                <div class="stat-icon"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="stat-value">₹@(((decimal?)ViewBag.TotalAmount ?? 0).ToString("N0"))</div>
+                <div class="stat-label">Contract Total</div>
+            </div>
+        </div>
+    </div>
+
+    @if (recentPayments.Any())
+    {
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-cash-coin me-2" style="color:var(--brand);"></i>My Payment History</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-clean mb-0">
+                        <thead><tr><th>Date</th><th>Amount</th><th>Mode</th><th class="table-mobile-hide">Note</th></tr></thead>
+                        <tbody>
+                            @foreach (var p in recentPayments)
+                            {
+                                <tr>
+                                    <td style="font-size:.8rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM yyyy")</td>
+                                    <td style="font-weight:700;color:#16a34a;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
+                                    <td style="font-size:.8rem;">@p["payment_mode"]</td>
+                                    <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p["note"]?.ToString() ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <!-- Admin / User view -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-indigo">
+                <div class="stat-icon"><i class="bi bi-search"></i></div>
+                <div class="stat-value">@(ViewBag.TotalInquiries ?? 0)</div>
+                <div class="stat-label">Total Inquiries</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-green">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-value">@(ViewBag.TotalClients ?? 0)</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-amber">
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value">₹@(((decimal?)ViewBag.TotalIncome ?? 0).ToString("N0"))</div>
+                <div class="stat-label">Total Income</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-rose">
+                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="stat-value">₹@(((decimal?)ViewBag.TotalExpenses ?? 0).ToString("N0"))</div>
+                <div class="stat-label">Total Expenses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-green">
+                <div class="stat-icon"><i class="bi bi-arrow-right-circle"></i></div>
+                <div class="stat-value">@(ViewBag.ConvertedCount ?? 0)</div>
+                <div class="stat-label">Converted</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-amber">
+                <div class="stat-icon"><i class="bi bi-percent"></i></div>
+                <div class="stat-value">@(ViewBag.ConversionRate ?? 0)%</div>
+                <div class="stat-label">Conversion Rate</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-rose">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-value">@(ViewBag.PendingClients ?? 0)</div>
+                <div class="stat-label">Pending Payments</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card si-indigo">
+                <div class="stat-icon"><i class="bi bi-bell"></i></div>
+                <div class="stat-value">@(ViewBag.FollowupToday ?? 0)</div>
+                <div class="stat-label">Follow-ups Today</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    @if (userRole == "Admin")
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <a asp-controller="Inquiry" asp-action="Create" class="card text-decoration-none quick-link-card">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="stat-icon si-indigo" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-plus-circle" style="font-size:.9rem;"></i></div>
+                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">New Inquiry</div></div>
+                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a asp-controller="Payment" asp-action="Create" class="card text-decoration-none quick-link-card">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="stat-icon si-green" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-cash-coin" style="font-size:.9rem;"></i></div>
+                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Add Payment</div></div>
+                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a asp-controller="Expense" asp-action="Create" class="card text-decoration-none quick-link-card">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="stat-icon si-rose" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-receipt" style="font-size:.9rem;"></i></div>
+                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Add Expense</div></div>
+                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a asp-controller="Configuration" asp-action="Index" class="card text-decoration-none quick-link-card">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="stat-icon si-amber" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-sliders" style="font-size:.9rem;"></i></div>
+                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Configuration</div></div>
+                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Recent Inquiries -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header-clean">
+                    <h6><i class="bi bi-clock-history me-2" style="color:var(--brand);"></i>Recent Inquiries</h6>
+                    <a asp-controller="Inquiry" asp-action="Index" style="font-size:.78rem;color:var(--brand);text-decoration:none;font-weight:500;">View all →</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (!recent.Any())
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;opacity:.25;"></i>
+                            <span style="font-size:.82rem;">No inquiries yet. <a asp-controller="Inquiry" asp-action="Create" style="color:var(--brand);">Add one →</a></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-clean mb-0">
+                                <thead><tr>
+                                    <th>Hotel</th><th>Client</th><th>Status</th>
+                                    <th class="table-mobile-hide">Follow-up</th><th class="table-mobile-hide">Date</th>
+                                </tr></thead>
+                                <tbody>
+                                    @foreach (var r in recent)
+                                    {
+                                        var isConverted = Convert.ToBoolean(r["is_converted"]);
+                                        <tr>
+                                            <td class="fw-500">
+                                                @r["hotel_name"]
+                                                @if (isConverted) { <span class="ms-1" style="background:#d1fae5;color:#065f46;font-size:.65rem;padding:1px 5px;border-radius:20px;font-weight:700;">✓</span> }
+                                            </td>
+                                            <td style="font-size:.82rem;">@r["client_name"]</td>
+                                            <td>
+                                                @if (r["status_name"] != null)
+                                                {<span style="background:#fef9ec;color:#92400e;font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@r["status_name"]</span>}
+                                                else {<span class="text-muted">—</span>}
+                                            </td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">
+                                                @(r["followup_date"] is not null and not DBNull ? Convert.ToDateTime(r["followup_date"]).ToString("dd MMM") : "—")
+                                            </td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(r["created_at"]).ToString("dd MMM yy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header-clean">
+                    <h6><i class="bi bi-cash-coin me-2" style="color:var(--brand);"></i>Recent Payments</h6>
+                    <a asp-controller="Payment" asp-action="Index" style="font-size:.78rem;color:var(--brand);text-decoration:none;font-weight:500;">View all →</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (!recentPayments.Any())
+                    {
+                        <div class="text-center py-4 text-muted" style="font-size:.82rem;">
+                            <i class="bi bi-cash-stack d-block mb-2" style="font-size:1.8rem;opacity:.25;"></i>
+                            No payments recorded yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-clean mb-0">
+                                <thead><tr><th>Company</th><th>Amount</th><th class="table-mobile-hide">Date</th></tr></thead>
+                                <tbody>
+                                    @foreach (var p in recentPayments)
+                                    {
+                                        <tr>
+                                            <td style="font-size:.8rem;">
+                                                <div class="fw-500">@p["company_name"]</div>
+                                                <div style="font-size:.72rem;color:var(--brand);font-family:monospace;">@p["client_ref"]</div>
+                                            </td>
+                                            <td style="font-weight:700;color:#16a34a;font-size:.88rem;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.quick-link-card { transition: box-shadow .15s, transform .15s; }
+.quick-link-card:hover { box-shadow: 0 4px 16px rgba(79,70,229,.12); transform: translateY(-1px); }
+</style>

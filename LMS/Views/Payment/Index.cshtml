@@ -1,0 +1,142 @@
+@model PaymentListViewModel
+@{ 
+    ViewData["Title"] = "Payments";
+    var payRole = Context.Session.GetString("UserRole") ?? "";
+}
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>@(payRole == "Client" ? "My Payments" : $"Payments{(Model.CompanyName != null ? $" – {Model.CompanyName}" : "")}")</h4>
+        <p>@(payRole == "Client" ? "Your payment history" : "All recorded income & payment receipts")</p>
+    </div>
+    @if (payRole != "Client")
+    {
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Export" asp-route-clientId="@Model.ClientId"
+           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+           class="btn btn-outline-success px-3" style="font-size:.83rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export
+        </a>
+        <a asp-controller="Payment" asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
+            <i class="bi bi-plus me-1"></i>New Payment
+        </a>
+    </div>
+    }
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3 px-4">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+            <div style="min-width:200px;flex:1;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Search Company</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-right:none;"><i class="bi bi-search text-muted" style="font-size:.8rem;"></i></span>
+                    <input type="text" name="search" value="@Model.Search" class="form-control" style="border-left:none;" placeholder="Company or ref…" />
+                </div>
+            </div>
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
+            </div>
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
+                <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
+            </div>
+            @if (Model.ClientId.HasValue)
+            {
+                <input type="hidden" name="clientId" value="@Model.ClientId" />
+            }
+            <div class="d-flex gap-2 align-self-end">
+                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="card mb-3">
+    <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span style="font-size:.75rem;color:var(--text-muted);">Total Payments (@Model.Payments.Count records)</span>
+        </div>
+        <div style="font-size:1.1rem;font-weight:700;color:#16a34a;">
+            ₹@Model.TotalAmount.ToString("N0")
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Payments.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-cash-stack d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
+                <span style="font-size:.84rem;">No payments found.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clean mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="table-mobile-hide">Ref</th>
+                            <th>Company</th>
+                            <th>Amount</th>
+                            <th>Mode</th>
+                            <th class="table-mobile-hide">Date</th>
+                            <th class="table-mobile-hide">Note</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var p in Model.Payments)
+                        {
+                            <tr>
+                                <td class="text-muted">@sr</td>
+                                <td class="table-mobile-hide" style="font-size:.75rem;font-family:monospace;color:var(--brand);font-weight:600;">@(p.ClientRef ?? "—")</td>
+                                <td class="fw-500">@(p.CompanyName ?? "—")</td>
+                                <td style="font-weight:700;color:#16a34a;">₹@p.Amount.ToString("N0")</td>
+                                <td>
+                                    <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@p.PaymentMode</span>
+                                </td>
+                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@p.PaymentDate.ToString("dd MMM yyyy")</td>
+                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p.Note ?? "—")</td>
+                                <td class="text-end">
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@p.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(p.ProofFile))
+                                        {
+                                            <a href="/uploads/payments/@p.ProofFile" target="_blank"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View Proof">
+                                                <i class="bi bi-paperclip"></i>
+                                            </a>
+                                        }
+                                        @if (SessionHelper.IsAdmin(Context.Session))
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Remove this payment?')">
+                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

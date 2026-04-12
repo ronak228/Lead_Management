@@ -1,0 +1,11 @@
+@model ClientFormViewModel
+@{ ViewData["Title"] = "New Client"; }
+
+<div class="page-header">
+    <h4>New Client</h4>
+    <p>Add a new client to the system</p>
+</div>
+
+<form asp-action="Create" method="post">
+    @await Html.PartialAsync("_Form", Model)
+</form>

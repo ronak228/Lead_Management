@@ -1,0 +1,110 @@
+@model InquiryFormViewModel
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-building me-2" style="color:var(--brand);"></i>Hotel & Client Details</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Hotel Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Inquiry.HotelName" value="@Model.Inquiry.HotelName"
+                               class="form-control" placeholder="e.g. Grand Hyatt Mumbai" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Client Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Inquiry.ClientName" value="@Model.Inquiry.ClientName"
+                               class="form-control" placeholder="Full name" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Client Number <span class="text-danger">*</span></label>
+                        <input type="text" name="Inquiry.ClientNumber" value="@Model.Inquiry.ClientNumber"
+                               class="form-control" placeholder="+91 98765 43210" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input type="text" name="Inquiry.CityText"
+                               value="@(Model.Inquiry.CityText ?? Model.Inquiry.CityName)"
+                               class="form-control" placeholder="Type or select a city…"
+                               list="cityList" autocomplete="off" />
+                        <datalist id="cityList">
+                            @foreach (var c in Model.Cities)
+                            {
+                                <option value="@c.Name"></option>
+                            }
+                        </datalist>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Note</label>
+                        <textarea name="Inquiry.Note" class="form-control" rows="3"
+                                  placeholder="Additional notes about this inquiry…">@Model.Inquiry.Note</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-sliders me-2" style="color:var(--brand);"></i>Classification</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label">Module</label>
+                    <select name="Inquiry.ModuleId" class="form-select">
+                        <option value="">— Select Module —</option>
+                        @foreach (var m in Model.Modules)
+                        {
+                            var selModule = Model.Inquiry.ModuleId == m.Id;
+                            <option value="@m.Id" selected="@selModule">@m.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select name="Inquiry.StatusId" class="form-select">
+                        <option value="">— Select Status —</option>
+                        @foreach (var s in Model.Statuses)
+                        {
+                            var selStatus = Model.Inquiry.StatusId == s.Id;
+                            <option value="@s.Id" selected="@selStatus">@s.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Follow-up Date</label>
+                    <input type="date" name="Inquiry.FollowupDate"
+                           value="@(Model.Inquiry.FollowupDate.HasValue ? Model.Inquiry.FollowupDate.Value.ToString("yyyy-MM-dd") : "")"
+                           class="form-control" />
+                </div>
+                <div>
+                    <label class="form-label d-block">Payment Received</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Inquiry.PaymentReceived"
+                                   id="prYes" value="true" @(Model.Inquiry.PaymentReceived ? "checked" : "") />
+                            <label class="form-check-label" for="prYes" style="font-size:.84rem;">Yes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Inquiry.PaymentReceived"
+                                   id="prNo" value="false" @(!Model.Inquiry.PaymentReceived ? "checked" : "") />
+                            <label class="form-check-label" for="prNo" style="font-size:.84rem;">No</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column gap-2">
+            <button type="submit" class="btn btn-brand py-2" style="font-size:.86rem;font-weight:600;">
+                <i class="bi bi-check me-1"></i>Save Inquiry
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary py-2" style="font-size:.84rem;">
+                Cancel
+            </a>
+        </div>
+    </div>
+</div>

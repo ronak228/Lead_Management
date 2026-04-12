@@ -1,0 +1,82 @@
+@model Inquiry
+@{ ViewData["Title"] = "Inquiry Details"; }
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>Inquiry Details</h4>
+        <p>Full information for this lead</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-brand px-3" style="font-size:.84rem;">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-building me-2" style="color:var(--brand);"></i>@Model.HotelName</h6>
+                <span class="@(Model.PaymentReceived ? "badge-active" : "badge-inactive")">
+                    @(Model.PaymentReceived ? "Payment Received" : "Payment Pending")
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    @{
+                        void Field(string label, string? value) {
+                            <div class="col-sm-6">
+                                <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">@label</div>
+                                <div style="font-size:.88rem;font-weight:500;">@(value ?? "—")</div>
+                            </div>
+                        }
+                    }
+                    @{ Field("Hotel Name", Model.HotelName); }
+                    @{ Field("Client Name", Model.ClientName); }
+                    @{ Field("Client Number", Model.ClientNumber); }
+                    @{ Field("City", Model.CityName); }
+                    @{ Field("Module", Model.ModuleName); }
+                    @{ Field("Status", Model.StatusName); }
+                    @{ Field("Added By", Model.CreatedByName); }
+                    @{ Field("Created", Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
+                    @{ Field("Updated", Model.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Note))
+                {
+                    <hr style="border-color:var(--border);" />
+                    <div>
+                        <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;">Note</div>
+                        <p style="font-size:.88rem;margin:0;color:var(--text-main);">@Model.Note</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <div style="width:60px;height:60px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:1.3rem;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+                        @(Model.ClientName.Length > 0 ? Model.ClientName[0].ToString().ToUpper() : "?")
+                    </div>
+                    <div style="font-weight:600;font-size:.95rem;">@Model.ClientName</div>
+                    <div style="font-size:.8rem;color:var(--text-muted);">@Model.ClientNumber</div>
+                </div>
+                <hr style="border-color:var(--border);" />
+                <div class="d-grid gap-2">
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Delete this inquiry permanently?')">
+                        <button type="submit" class="btn btn-outline-danger w-100" style="font-size:.83rem;">
+                            <i class="bi bi-trash3 me-1"></i>Delete Inquiry
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

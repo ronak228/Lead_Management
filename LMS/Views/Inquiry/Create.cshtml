@@ -1,0 +1,11 @@
+@model InquiryFormViewModel
+@{ ViewData["Title"] = "New Inquiry"; }
+
+<div class="page-header">
+    <h4>New Inquiry</h4>
+    <p>Fill in the details to add a new hotel lead inquiry</p>
+</div>
+
+<form asp-action="Create" method="post">
+    @await Html.PartialAsync("_Form", Model)
+</form>

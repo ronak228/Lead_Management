@@ -1,0 +1,131 @@
+@model ClientFormViewModel
+
+@if (Model.Client.SourceInquiryId.HasValue)
+{
+    <input type="hidden" name="Client.SourceInquiryId" value="@Model.Client.SourceInquiryId" />
+}
+
+@{
+    bool isNew = Model.Client.Id == 0;
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-building me-2" style="color:var(--brand);"></i>Company & Contact Details</h6>
+            </div>
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(Model.Client.ClientRef))
+                {
+                    <div class="alert alert-light border mb-3 py-2 px-3" style="font-size:.82rem;">
+                        <i class="bi bi-tag me-1" style="color:var(--brand);"></i>
+                        <strong>Client ID:</strong>
+                        <span style="font-family:monospace;color:var(--brand);font-weight:700;">@Model.Client.ClientRef</span>
+                    </div>
+                }
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" name="Client.CompanyName" value="@Model.Client.CompanyName"
+                               class="form-control" placeholder="e.g. Grand Hyatt Hotels" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contact Person <span class="text-danger">*</span></label>
+                        <input type="text" name="Client.ContactPerson" value="@Model.Client.ContactPerson"
+                               class="form-control" placeholder="Full name" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        <input type="text" name="Client.Phone" value="@Model.Client.Phone"
+                               class="form-control" placeholder="+91 98765 43210" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="Client.Email" value="@Model.Client.Email"
+                               class="form-control" placeholder="contact@company.com" />
+                        @if (isNew)
+                        {
+                            <div class="form-text"><i class="bi bi-link-45deg me-1"></i>Providing an email automatically generates a secure setup link for the client to set their own password.</div>
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input type="text" name="Client.CityText"
+                               value="@(Model.Client.CityText ?? Model.Client.CityName)"
+                               class="form-control" placeholder="Type or select a city…"
+                               list="cityList" autocomplete="off" />
+                        <datalist id="cityList">
+                            @foreach (var c in Model.Cities)
+                            {
+                                <option value="@c.Name"></option>
+                            }
+                        </datalist>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Module</label>
+                        <select name="Client.ModuleId" class="form-select">
+                            <option value="">— Select Module —</option>
+                            @foreach (var m in Model.Modules)
+                            {
+                                <option value="@m.Id" selected="@(Model.Client.ModuleId == m.Id)">@m.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Room Size / Unit</label>
+                        <input type="text" name="Client.RoomSize" value="@Model.Client.RoomSize"
+                               class="form-control" placeholder="e.g. 120 rooms, 2BHK…" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Total Contract Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="Client.TotalAmount" value="@Model.Client.TotalAmount"
+                                   class="form-control" placeholder="0.00" min="0" step="0.01" />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="Client.Address" value="@Model.Client.Address"
+                               class="form-control" placeholder="Street, area…" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <textarea name="Client.Notes" class="form-control" rows="3"
+                                  placeholder="Any additional notes about this client…">@Model.Client.Notes</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body p-4 d-flex flex-column gap-2">
+                @if (Model.Client.TotalAmount > 0 && Model.Client.Id > 0)
+                {
+                    <div class="mb-2 p-3 rounded" style="background:#f8faff;border:1px solid #e5e7eb;">
+                        <div style="font-size:.75rem;color:#6b7280;margin-bottom:2px;">Payment Summary</div>
+                        <div class="d-flex justify-content-between" style="font-size:.83rem;">
+                            <span>Total</span><strong>₹@Model.Client.TotalAmount.ToString("N0")</strong>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size:.83rem;">
+                            <span>Paid</span><span style="color:#16a34a;">₹@Model.Client.TotalPaid.ToString("N0")</span>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size:.83rem;">
+                            <span>Remaining</span><span style="color:#dc2626;">₹@Model.Client.TotalRemaining.ToString("N0")</span>
+                        </div>
+                    </div>
+                }
+                <button type="submit" class="btn btn-brand py-2" style="font-size:.86rem;font-weight:600;">
+                    <i class="bi bi-check me-1"></i>Save Client
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary py-2" style="font-size:.84rem;">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

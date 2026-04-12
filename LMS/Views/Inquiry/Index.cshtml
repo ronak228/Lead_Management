@@ -1,0 +1,232 @@
+@model InquiryListViewModel
+@{
+    ViewData["Title"] = "Inquiries";
+    var inqRole = Context.Session.GetString("UserRole") ?? "";
+    bool isClient = inqRole == "Client";
+}
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>@(isClient ? "My Inquiries" : "Inquiries")</h4>
+        <p>@(isClient ? "Your submitted service inquiries" : "Manage all hotel lead inquiries")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        @if (!isClient)
+        {
+        <a asp-action="Export" asp-route-search="@Model.Search" asp-route-filterStatus="@Model.FilterStatus"
+           asp-route-filterModule="@Model.FilterModule" asp-route-filterPayment="@Model.FilterPayment"
+           asp-route-filterCity="@Model.FilterCity" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+           class="btn btn-outline-success px-3" style="font-size:.83rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export
+        </a>
+        }
+        <a asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
+            <i class="bi bi-plus me-1"></i>New Inquiry
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3 px-4">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+            <div style="min-width:200px;flex:1;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-right:none;">
+                        <i class="bi bi-search text-muted" style="font-size:.8rem;"></i>
+                    </span>
+                    <input type="text" name="search" value="@Model.Search"
+                           class="form-control" style="border-left:none;"
+                           placeholder="Hotel, client, number…" />
+                </div>
+            </div>
+            <div style="min-width:130px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Status</label>
+                <select name="filterStatus" class="form-select">
+                    <option value="">All Statuses</option>
+                    @foreach (var s in Model.Statuses)
+                    {
+                        <option value="@s.Id" selected="@(Model.FilterStatus == s.Id)">@s.Name</option>
+                    }
+                </select>
+            </div>
+            <div style="min-width:130px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Module</label>
+                <select name="filterModule" class="form-select">
+                    <option value="">All Modules</option>
+                    @foreach (var m in Model.Modules)
+                    {
+                        <option value="@m.Id" selected="@(Model.FilterModule == m.Id)">@m.Name</option>
+                    }
+                </select>
+            </div>
+            @if (!isClient)
+            {
+            <div style="min-width:120px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">City</label>
+                <select name="filterCity" class="form-select">
+                    <option value="">All Cities</option>
+                    @foreach (var ci in Model.Cities)
+                    {
+                        <option value="@ci.Id" selected="@(Model.FilterCity == ci.Id.ToString())">@ci.Name</option>
+                    }
+                </select>
+            </div>
+            }
+            <div style="min-width:115px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Payment</label>
+                <select name="filterPayment" class="form-select">
+                    <option value="">All</option>
+                    <option value="yes" selected="@(Model.FilterPayment=="yes")">Received</option>
+                    <option value="no"  selected="@(Model.FilterPayment=="no")">Pending</option>
+                </select>
+            </div>
+            @if (!isClient)
+            {
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
+            </div>
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
+                <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
+            </div>
+            }
+            <div class="d-flex gap-2 align-self-end">
+                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header-clean">
+        <h6><i class="bi bi-search me-2" style="color:var(--brand);"></i>
+            @(isClient ? "My Inquiries" : "All Inquiries")
+            <span class="text-muted fw-normal" style="font-size:.76rem;">(@Model.Inquiries.Count records)</span>
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Inquiries.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
+                <span style="font-size:.84rem;">No inquiries found. <a asp-action="Create" style="color:var(--brand);">Add one</a></span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clean mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Hotel Name</th>
+                            @if (!isClient) { <th class="table-mobile-hide">Client</th> }
+                            <th class="table-mobile-hide">Contact</th>
+                            <th class="table-mobile-hide">City</th>
+                            <th class="table-mobile-hide">Module</th>
+                            <th>Status</th>
+                            @if (!isClient) { <th class="table-mobile-hide">Follow-up</th> }
+                            <th class="table-mobile-hide">Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var inq in Model.Inquiries)
+                        {
+                            <tr>
+                                <td class="text-muted">@sr</td>
+                                <td class="fw-500">
+                                    @inq.HotelName
+                                    @if (inq.IsConverted)
+                                    {
+                                        <span class="ms-1" style="background:#d1fae5;color:#065f46;font-size:.67rem;padding:2px 6px;border-radius:20px;font-weight:700;">CONVERTED</span>
+                                    }
+                                </td>
+                                @if (!isClient)
+                                {
+                                    <td class="table-mobile-hide">@inq.ClientName</td>
+                                }
+                                <td class="table-mobile-hide" style="font-size:.8rem;">@inq.ClientNumber</td>
+                                <td class="table-mobile-hide" style="font-size:.8rem;">@(inq.CityName ?? "—")</td>
+                                <td class="table-mobile-hide">
+                                    @if (inq.ModuleName != null)
+                                    {
+                                        <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@inq.ModuleName</span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td>
+                                    @if (inq.StatusName != null)
+                                    {
+                                        var badgeStyle = inq.IsConverted ? "background:#d1fae5;color:#065f46;" : "background:#fef9ec;color:#92400e;";
+                                        <span style="@badgeStyle font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@inq.StatusName</span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                @if (!isClient)
+                                {
+                                <td class="table-mobile-hide" style="font-size:.75rem;">
+                                    @if (inq.FollowupDate.HasValue)
+                                    {
+                                        var isOverdue = inq.FollowupDate.Value.Date < DateTime.Today;
+                                        var isToday   = inq.FollowupDate.Value.Date == DateTime.Today;
+                                        <span style="color:@(isOverdue?"#dc2626":isToday?"#d97706":"inherit");font-weight:@(isToday||isOverdue?"600":"400");">
+                                            @inq.FollowupDate.Value.ToString("dd MMM yy")
+                                            @if (isOverdue) { <i class="bi bi-exclamation-circle ms-1 text-danger"></i> }
+                                            @if (isToday)   { <i class="bi bi-bell ms-1 text-warning"></i> }
+                                        </span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                }
+                                <td class="text-muted table-mobile-hide" style="font-size:.75rem;">@inq.CreatedAt.ToString("dd MMM yy")</td>
+                                <td class="text-end">
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@inq.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (!inq.IsConverted)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@inq.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            @if (!isClient)
+                                            {
+                                            <a asp-controller="Inquiry" asp-action="ConvertToClient" asp-route-id="@inq.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-success" title="Convert to Client">
+                                                <i class="bi bi-arrow-right-circle"></i>
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@inq.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Delete this inquiry?')">
+                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                            }
+                                        }
+                                        else if (!isClient)
+                                        {
+                                            <a asp-controller="Client" asp-action="Details" asp-route-id="@inq.ConvertedClientId"
+                                               class="btn btn-sm btn-outline-success" style="font-size:.72rem;" title="View Client">
+                                                <i class="bi bi-person-check me-1"></i>Client
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

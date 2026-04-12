@@ -1,0 +1,154 @@
+@model List<UserListItem>
+@{
+    ViewData["Title"] = "User Management";
+    var search     = ViewBag.Search as string ?? "";
+    var filterRole = ViewBag.FilterRole as string ?? "";
+    var sessionId  = Context.Session.GetInt32("UserId");
+}
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>User Management</h4>
+        <p>View and manage all registered users</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-muted" style="font-size:.8rem;">@Model.Count user(s)</span>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body py-3 px-4">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <div class="flex-grow-1" style="min-width:200px;max-width:360px;">
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-right:none;">
+                        <i class="bi bi-search text-muted" style="font-size:.82rem;"></i>
+                    </span>
+                    <input type="text" name="search" value="@search" class="form-control"
+                           style="border-left:none;" placeholder="Search by name or email…" />
+                </div>
+            </div>
+            <select name="filterRole" class="form-select" style="width:auto;">
+                <option value="">All Roles</option>
+                <option value="Admin"    selected="@(filterRole=="Admin")">Admin</option>
+                <option value="Employee" selected="@(filterRole=="Employee")">Employee</option>
+                <option value="Client"   selected="@(filterRole=="Client")">Client</option>
+            </select>
+            <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Search</button>
+            @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(filterRole))
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Clear</a>
+            }
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header-clean">
+        <h6><i class="bi bi-people me-2" style="color:var(--brand);"></i>All Users</h6>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-person-x d-block mb-2" style="font-size:2rem;opacity:.3;"></i>
+                No users found.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clean mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:44px;">#</th>
+                            <th>Name</th>
+                            <th class="table-mobile-hide">Email</th>
+                            <th style="width:90px;">Role</th>
+                            <th style="width:100px;">Status</th>
+                            <th class="table-mobile-hide" style="width:90px;">Joined</th>
+                            <th style="width:155px;" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var u in Model)
+                        {
+                            var isSelf = u.Id == sessionId;
+                            <tr>
+                                <td class="text-muted">@sr</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            @(u.FullName.Length > 0 ? u.FullName[0].ToString().ToUpper() : "?")
+                                        </div>
+                                        <span class="fw-500">
+                                            @u.FullName
+                                            @if (isSelf)
+                                            {<span class="badge-user ms-1" style="font-size:.65rem;">You</span>}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="text-muted table-mobile-hide" style="font-size:.81rem;">@u.Email</td>
+                                <td>
+                                    <span class="@(u.Role == "Admin" ? "badge-admin" : u.Role == "Employee" ? "badge-warning" : "badge-user")">
+                                        @u.Role
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="@(u.IsActive ? "badge-active" : "badge-inactive")">
+                                        @(u.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td class="text-muted table-mobile-hide" style="font-size:.75rem;">@u.CreatedAt.ToString("dd MMM yy")</td>
+                                <td class="text-end">
+                                    @if (!isSelf)
+                                    {
+                                        <div class="table-actions">
+                                        <!-- Role change dropdown -->
+                                        <form asp-action="ChangeRole" method="post" class="d-inline d-flex gap-1 align-items-center">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <select name="role" class="form-select form-select-sm" style="width:auto;font-size:.78rem;">
+                                                <option value="Admin"    selected="@(u.Role=="Admin")">Admin</option>
+                                                <option value="Employee" selected="@(u.Role=="Employee")">Employee</option>
+                                                <option value="Client"   selected="@(u.Role=="Client")">Client</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Update role">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        <!-- Toggle Active -->
+                                        <form asp-action="Toggle" asp-route-id="@u.Id" method="post" class="d-inline">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-sm-icon @(u.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                    title="@(u.IsActive ? "Deactivate" : "Activate")">
+                                                <i class="bi @(u.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
+                                            </button>
+                                        </form>
+                                        <!-- Delete (soft) -->
+                                        <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Remove user @u.FullName? Their data will be preserved in audit logs.')">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-sm-icon btn-outline-danger"
+                                                    title="Remove">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" style="font-size:.74rem;">—</span>
+                                    }
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

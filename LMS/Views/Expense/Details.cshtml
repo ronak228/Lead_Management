@@ -1,0 +1,87 @@
+@model Expense
+@{ ViewData["Title"] = "Expense Details"; }
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>Expense Details</h4>
+        <p>Recorded on @Model.ExpenseDate.ToString("dd MMM yyyy")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-brand px-3" style="font-size:.84rem;">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-receipt me-2" style="color:var(--brand);"></i>Expense Record</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    @{
+                        void Field(string label, string? val)
+                        {
+                            <div class="col-sm-6">
+                                <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">@label</div>
+                                <div style="font-size:.88rem;font-weight:500;">@(val ?? "—")</div>
+                            </div>
+                        }
+                    }
+                    @{ Field("Date", Model.ExpenseDate.ToString("dd MMM yyyy")); }
+                    @{ Field("Category", Model.CategoryName); }
+                    @{ Field("From", Model.FromName); }
+                    @{ Field("To", Model.ToName); }
+                    <div class="col-12">
+                        <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">Amount</div>
+                        <div style="font-size:1.6rem;font-weight:700;color:#dc2626;">₹@Model.Amount.ToString("N0")</div>
+                    </div>
+                    @{ Field("Mode", Model.PaymentMode); }
+                    @if (!string.IsNullOrEmpty(Model.ChequeNo))     { Field("Cheque No", Model.ChequeNo); }
+                    @if (!string.IsNullOrEmpty(Model.TransactionId)) { Field("Transaction ID", Model.TransactionId); }
+                    @if (!string.IsNullOrEmpty(Model.BankName))      { Field("Bank", Model.BankName); }
+                    @{ Field("Note", Model.Note); }
+                    @{ Field("Recorded By", Model.CreatedByName); }
+                    @{ Field("Recorded On", Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Attachment))
+                {
+                    <hr style="border-color:var(--border);" />
+                    <div>
+                        <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;">Attachment</div>
+                        @{ var ext = System.IO.Path.GetExtension(Model.Attachment ?? "").ToLower(); }
+                        @if (ext == ".pdf")
+                        {
+                            <a href="/uploads/expenses/@Model.Attachment" target="_blank"
+                               class="btn btn-outline-secondary" style="font-size:.83rem;">
+                                <i class="bi bi-file-earmark-pdf me-1 text-danger"></i>View PDF
+                            </a>
+                        }
+                        else
+                        {
+                            <img src="/uploads/expenses/@Model.Attachment" style="max-width:100%;border-radius:8px;border:1px solid var(--border);" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (SessionHelper.IsAdmin(Context.Session))
+        {
+            <div class="mt-3">
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('Remove this expense?')">
+                    <button type="submit" class="btn btn-outline-danger w-100" style="font-size:.83rem;">
+                        <i class="bi bi-trash3 me-1"></i>Remove Expense
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>

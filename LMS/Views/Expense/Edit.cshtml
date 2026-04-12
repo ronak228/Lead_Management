@@ -1,0 +1,123 @@
+@model ExpenseFormViewModel
+@{ ViewData["Title"] = "Edit Expense"; }
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>Edit Expense</h4>
+        <p>Update the expense record</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Expense.Id" method="post" enctype="multipart/form-data">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header-clean">
+                    <h6><i class="bi bi-receipt me-2" style="color:var(--brand);"></i>Expense Details</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="Expense.ExpenseDate"
+                                   value="@Model.Expense.ExpenseDate.ToString("yyyy-MM-dd")"
+                                   class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select name="Expense.CategoryId" class="form-select">
+                                <option value="">— Select Category —</option>
+                                @foreach (var c in Model.Categories)
+                                {
+                                    <option value="@c.Id" selected="@(Model.Expense.CategoryId == c.Id)">@c.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">From</label>
+                            <input type="text" name="Expense.FromName" value="@Model.Expense.FromName"
+                                   class="form-control" placeholder="Vendor / person name" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">To</label>
+                            <input type="text" name="Expense.ToName" value="@Model.Expense.ToName"
+                                   class="form-control" placeholder="Paid to" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="Expense.Amount" value="@Model.Expense.Amount"
+                                       class="form-control" placeholder="0.00" min="1" step="0.01" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Mode</label>
+                            <select name="Expense.PaymentMode" class="form-select" id="expMode">
+                                <option value="Cash"   selected="@(Model.Expense.PaymentMode=="Cash")">Cash</option>
+                                <option value="Cheque" selected="@(Model.Expense.PaymentMode=="Cheque")">Cheque</option>
+                                <option value="Online" selected="@(Model.Expense.PaymentMode=="Online")">Online Transfer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="expCheque">
+                            <label class="form-label">Cheque Number</label>
+                            <input type="text" name="Expense.ChequeNo" value="@Model.Expense.ChequeNo"
+                                   class="form-control" placeholder="Cheque #" />
+                        </div>
+                        <div class="col-md-6" id="expTxn">
+                            <label class="form-label">Transaction ID</label>
+                            <input type="text" name="Expense.TransactionId" value="@Model.Expense.TransactionId"
+                                   class="form-control" placeholder="UTR / Transaction ID" />
+                        </div>
+                        <div class="col-md-6" id="expBank">
+                            <label class="form-label">Bank Name</label>
+                            <input type="text" name="Expense.BankName" value="@Model.Expense.BankName"
+                                   class="form-control" placeholder="e.g. HDFC Bank" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Note</label>
+                            <textarea name="Expense.Note" class="form-control" rows="2"
+                                      placeholder="Details about this expense…">@Model.Expense.Note</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Attachment <span class="text-muted" style="font-size:.76rem;">(JPG/PNG/PDF, max 2MB – leave blank to keep existing)</span></label>
+                            <input type="file" name="attachment" class="form-control" accept=".jpg,.jpeg,.png,.pdf" />
+                            @if (!string.IsNullOrEmpty(Model.Expense.Attachment))
+                            {
+                                <a href="/uploads/expenses/@Model.Expense.Attachment" target="_blank"
+                                   class="mt-1 d-inline-block" style="font-size:.78rem;color:var(--brand);">
+                                    <i class="bi bi-paperclip me-1"></i>Current attachment
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body p-4 d-flex flex-column gap-2">
+                    <button type="submit" class="btn btn-brand py-2" style="font-size:.86rem;font-weight:600;">
+                        <i class="bi bi-check me-1"></i>Update Expense
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary py-2" style="font-size:.84rem;">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+(function(){
+    var m = document.getElementById('expMode');
+    var ch = document.getElementById('expCheque');
+    var tx = document.getElementById('expTxn');
+    var bk = document.getElementById('expBank');
+    function u(){ var v=m.value; ch.style.display=v==='Cheque'?'':'none'; tx.style.display=v==='Online'?'':'none'; bk.style.display=(v==='Cheque'||v==='Online')?'':'none'; }
+    m.addEventListener('change',u); u();
+})();
+</script>
+
