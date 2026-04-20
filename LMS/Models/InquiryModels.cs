@@ -1,8 +1,13 @@
+using LeadManagementSystem.Helpers;
+
 namespace LeadManagementSystem.Models;
 
 public class Inquiry
 {
     public int     Id               { get; set; }
+    public int?    ClientId         { get; set; }   // linked client (optional)
+    public string? ClientRef        { get; set; }   // denormalised for display
+    public string? ClientCompany    { get; set; }   // denormalised for display
     public string  HotelName        { get; set; } = "";
     public string  ClientName       { get; set; } = "";
     public string  ClientNumber     { get; set; } = "";
@@ -17,7 +22,6 @@ public class Inquiry
     public DateTime? FollowupDate   { get; set; }
     public string? Note             { get; set; }
     public bool    IsConverted      { get; set; }
-    public int?    ConvertedClientId { get; set; }
     public bool    IsDeleted        { get; set; }
     public int?    CreatedBy        { get; set; }
     public string? CreatedByName    { get; set; }
@@ -47,4 +51,5 @@ public class InquiryListViewModel
     public string?          FilterCity    { get; set; }
     public string?          DateFrom      { get; set; }
     public string?          DateTo        { get; set; }
+    public PaginationInfo?  Pagination    { get; set; }
 }

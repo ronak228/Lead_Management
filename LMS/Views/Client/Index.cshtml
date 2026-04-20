@@ -11,9 +11,6 @@
            class="btn btn-outline-success px-3" style="font-size:.83rem;">
             <i class="bi bi-file-earmark-excel me-1"></i>Export
         </a>
-        <a asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
-            <i class="bi bi-plus me-1"></i>New Client
-        </a>
     </div>
 </div>
 
@@ -61,7 +58,7 @@
         {
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-inbox d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
-                <span style="font-size:.84rem;">No clients found. <a asp-action="Create" style="color:var(--brand);">Add one</a></span>
+                <span style="font-size:.84rem;">No clients found. New clients are created via registration.</span>
             </div>
         }
         else
@@ -76,7 +73,6 @@
                             <th class="table-mobile-hide">Contact</th>
                             <th>Phone</th>
                             <th class="table-mobile-hide">Module</th>
-                            <th class="table-mobile-hide">Payment</th>
                             <th>Status</th>
                             <th class="table-mobile-hide">Added</th>
                             <th class="text-end">Actions</th>
@@ -102,19 +98,6 @@
                                 <td class="table-mobile-hide" style="font-size:.83rem;">@c.ContactPerson</td>
                                 <td style="font-size:.8rem;">@c.Phone</td>
                                 <td class="table-mobile-hide" style="font-size:.8rem;">@(c.ModuleName ?? "â€”")</td>
-                                <td class="table-mobile-hide">
-                                    @{
-                                        var ps = c.PaymentStatus;
-                                        var psStyle = ps == "Paid" ? "background:#d1fae5;color:#065f46;" :
-                                                      ps == "Partial" ? "background:#fef3c7;color:#92400e;" :
-                                                      c.TotalAmount > 0 ? "background:#fee2e2;color:#991b1b;" : "background:#f3f4f6;color:#6b7280;";
-                                    }
-                                    <span style="@psStyle font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@ps</span>
-                                    @if (c.TotalAmount > 0)
-                                    {
-                                        <div style="font-size:.7rem;color:#6b7280;margin-top:2px;">@c.TotalPaid.ToString("N0") / @c.TotalAmount.ToString("N0")</div>
-                                    }
-                                </td>
                                 <td>
                                     <span class="@(c.IsActive ? "badge-active" : "badge-inactive")">
                                         @(c.IsActive ? "Active" : "Inactive")
@@ -127,27 +110,24 @@
                                            class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@c.Id"
-                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@c.Id"
-                                           class="btn btn-sm btn-sm-icon btn-outline-primary" title="Add Payment">
-                                            <i class="bi bi-cash-coin"></i>
-                                        </a>
-                                        <form asp-action="Toggle" asp-route-id="@c.Id" method="post" class="d-inline">
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-sm-icon @(c.IsActive ? "btn-outline-warning" : "btn-outline-success")"
-                                                    title="@(c.IsActive ? "Deactivate" : "Activate")">
-                                                <i class="bi @(c.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
-                                            </button>
-                                        </form>
-                                        @if (SessionHelper.IsAdmin(Context.Session))
+                                        @if (SessionHelper.IsClient(Context.Session))
                                         {
-                                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('Remove client @c.CompanyName?')">
-                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash3"></i>
+                                            <a asp-action="Edit" asp-route-id="@c.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                        @if (SessionHelper.IsAdmin(Context.Session) || SessionHelper.IsEmployee(Context.Session))
+                                        {
+                                            <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@c.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-primary" title="Add Payment">
+                                                <i class="bi bi-cash-coin"></i>
+                                            </a>
+                                            <form asp-action="ToggleActive" asp-route-id="@c.Id" method="post" class="d-inline">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-sm-icon @(c.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                        title="@(c.IsActive ? "Deactivate" : "Activate")">
+                                                    <i class="bi @(c.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
                                                 </button>
                                             </form>
                                         }

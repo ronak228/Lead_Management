@@ -99,6 +99,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface); 
     text-decoration: none; transition: background .15s; cursor: pointer;
 }
 .btn-logout:hover { background: rgba(239,68,68,.22); color: #fca5a5; }
+.btn-logout-form { width: 100%; }
 
 /* COLLAPSED */
 /* Desktop collapsed state is handled in the @media (min-width: 992px) block below */
@@ -232,16 +233,21 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface); 
     backdrop-filter: blur(1px);
 }
 
+/* ── BOTTOM NAV BAR (mobile only, hidden by default) ── */
+#mobileBottomNav {
+    display: none;
+}
+
 /* ── MOBILE (< 768px) ── */
 @media (max-width: 767.98px) {
 
     /* Sidebar: hidden off-screen, slides in as overlay */
     #sidebar {
         position: fixed !important; top: 0; left: 0; height: 100vh;
-        z-index: 1045; width: 240px !important;
+        z-index: 1045; width: 260px !important;
         transform: translateX(-100%);
         transition: transform .25s ease;
-        box-shadow: 4px 0 24px rgba(0,0,0,.22);
+        box-shadow: 6px 0 30px rgba(0,0,0,.28);
     }
     /* Restore all hidden text when sidebar is open on mobile */
     #sidebar .nav-link span,
@@ -251,7 +257,8 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface); 
     .btn-logout span { display: flex !important; }
     .nav-section-label { display: block !important; }
     .sidebar-user-info { display: block !important; }
-    #sidebar .nav-link { justify-content: flex-start !important; padding: 8px 16px !important; margin: 1px 8px !important; }
+    #sidebar .nav-link { justify-content: flex-start !important; padding: 10px 16px !important; margin: 2px 8px !important; font-size:.85rem !important; }
+    #sidebar .nav-link i { font-size:1rem !important; }
     .sidebar-user { justify-content: flex-start !important; }
     .btn-logout { justify-content: center !important; }
 
@@ -263,40 +270,97 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface); 
     #wrapper { display: block; }
     #page-content { width: 100%; }
 
-    /* Top navbar */
-    .top-navbar { padding: 0 14px; }
+    /* Top navbar – compact, show only toggle + title */
+    .top-navbar { padding: 0 12px; height: 50px; }
     .top-navbar .ms-auto { display: none !important; }
+    .page-title { font-size: .85rem; }
+    .btn-toggle { width: 36px; height: 36px; }
 
-    /* Main content padding */
-    .main-content { padding: 14px; }
+    /* Main content padding – tight on mobile, extra bottom for bottom-nav */
+    .main-content { padding: 12px 12px 80px; }
 
-    /* Page header: stack button below on mobile */
-    .page-header.d-flex { flex-direction: column !important; align-items: flex-start !important; gap: 10px; }
-    .page-header .btn-brand { width: 100%; justify-content: center; }
+    /* Page header: stack vertically */
+    .page-header { margin-bottom: 14px; }
+    .page-header h4 { font-size: 1rem; }
+    .page-header.d-flex,
+    .page-header.d-flex.align-items-start { flex-direction: column !important; align-items: stretch !important; gap: 10px; }
+    .page-header .d-flex.gap-2 { flex-wrap: wrap; }
+    .page-header .btn { flex: 1 1 auto; justify-content: center; font-size:.82rem; }
+    .page-header .btn-brand { min-width: 0; }
 
-    /* Cards */
-    .card-header-clean { padding: 12px 14px; }
-    .card-header-clean > *:last-child { width: 100%; }
-    .card-header-clean .btn { width: 100%; justify-content: center; }
+    /* Cards – rounded, proper shadow */
+    .card { border-radius: 10px; }
+    .card-header-clean { padding: 11px 14px; flex-wrap: wrap; gap: 8px; }
+    .card-header-clean h6 { font-size: .82rem; }
+    .card-body { padding: 14px !important; }
 
-    /* Tables: hide lower-priority columns on mobile */
+    /* Stat cards – 2-per-row grid */
+    .stat-card { padding: 14px 12px; border-radius: 10px; }
+    .stat-icon { width: 36px; height: 36px; font-size: .9rem; border-radius: 9px; }
+    .stat-value { font-size: 1.15rem; margin: 7px 0 2px; }
+    .stat-label { font-size: .7rem; }
+
+    /* Tables – hide lower-priority columns */
     .table-mobile-hide { display: none !important; }
+    .table-clean thead th { padding: 8px 10px; font-size: .68rem; }
+    .table-clean tbody td { padding: 9px 10px; font-size: .8rem; }
+    .table-responsive { border-radius: 0 0 10px 10px; }
 
-    /* Stat cards */
-    .stat-value { font-size: 1.2rem; }
+    /* Action buttons – touch-friendly */
+    .btn-sm-icon { width: 32px; height: 32px; font-size: .8rem; }
+    .table-actions { gap: 5px; }
 
     /* Auth card */
-    .auth-card { width: 100%; max-width: 420px; }
+    .auth-card { width: calc(100% - 24px); margin: 12px; border-radius: 14px; }
 
     /* Filters: full width on mobile */
-    .filter-row { flex-direction: column !important; }
+    .filter-row { flex-direction: column !important; gap: 8px !important; }
     .filter-row > * { min-width: 100% !important; flex: 1 1 100% !important; }
 
-    /* Action buttons in tables */
-    .table-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: nowrap; }
+    /* Forms – larger tap targets */
+    .form-control, .form-select {
+        font-size: .88rem; padding: 10px 12px; min-height: 42px;
+    }
+    .form-label { font-size: .83rem; }
+    .btn { min-height: 40px; }
 
-    /* Modal full-width on mobile */
-    .modal-dialog { margin: 10px !important; max-width: calc(100% - 20px) !important; }
+    /* Modal – nearly full width */
+    .modal-dialog { margin: 8px !important; max-width: calc(100% - 16px) !important; }
+
+    /* Row gutters – tighter on mobile */
+    .row.g-4 { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+    .row.g-3 { --bs-gutter-x: .6rem;  --bs-gutter-y: .6rem; }
+
+    /* Badges – readable on small screens */
+    .badge-active, .badge-inactive, .badge-admin, .badge-user { font-size: .68rem; padding: 3px 8px; }
+
+    /* Alert – compact */
+    .alert { font-size: .81rem; padding: 10px 14px; }
+
+    /* Progress bar label */
+    .progress { height: 7px !important; }
+
+    /* Bottom nav bar – show on mobile */
+    #mobileBottomNav {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: 58px; background: #fff;
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+        z-index: 1030;
+        align-items: stretch;
+    }
+    #mobileBottomNav a {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 2px;
+        color: var(--text-muted); text-decoration: none;
+        font-size: .6rem; font-weight: 500;
+        transition: color .15s; -webkit-tap-highlight-color: transparent;
+        padding: 6px 0;
+    }
+    #mobileBottomNav a i { font-size: 1.15rem; line-height: 1; }
+    #mobileBottomNav a.active { color: var(--brand); }
+    #mobileBottomNav a:active { background: var(--brand-soft); border-radius: 8px; }
 }
 
 /* ── TABLET (768px – 991px) ── */

@@ -1,3 +1,5 @@
+using LeadManagementSystem.Helpers;
+
 namespace LeadManagementSystem.Models;
 
 public class Expense
@@ -39,4 +41,5 @@ public class ExpenseListViewModel
     public string?          Search         { get; set; }
     public string?          DateFrom       { get; set; }
     public string?          DateTo         { get; set; }
+    public PaginationInfo?  Pagination     { get; set; }
 }

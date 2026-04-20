@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>LeadManagementSystem</RootNamespace>
+    <UserSecretsId>LeadManagementSystem-Secrets</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,7 @@
     <PackageReference Include="ClosedXML" Version="0.102.3" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
     <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="Npgsql.DependencyInjection" Version="8.0.3" />
   </ItemGroup>
 
 </Project>

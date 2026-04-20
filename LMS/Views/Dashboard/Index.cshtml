@@ -16,32 +16,18 @@
 {
     <!-- Client view -->
     <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-indigo">
                 <div class="stat-icon"><i class="bi bi-building"></i></div>
                 <div class="stat-value">@(ViewBag.CompanyName ?? "—")</div>
                 <div class="stat-label">@(ViewBag.ClientRef ?? "")</div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-green">
                 <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
                 <div class="stat-value">₹@(((decimal?)ViewBag.TotalPaid ?? 0).ToString("N0"))</div>
                 <div class="stat-label">Amount Paid</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-rose">
-                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                <div class="stat-value">₹@(((decimal?)ViewBag.Remaining ?? 0).ToString("N0"))</div>
-                <div class="stat-label">Remaining</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-amber">
-                <div class="stat-icon"><i class="bi bi-receipt-cutoff"></i></div>
-                <div class="stat-value">₹@(((decimal?)ViewBag.TotalAmount ?? 0).ToString("N0"))</div>
-                <div class="stat-label">Contract Total</div>
             </div>
         </div>
     </div>
@@ -77,28 +63,28 @@ else
 {
     <!-- Admin / User view -->
     <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-indigo">
                 <div class="stat-icon"><i class="bi bi-search"></i></div>
                 <div class="stat-value">@(ViewBag.TotalInquiries ?? 0)</div>
                 <div class="stat-label">Total Inquiries</div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-green">
                 <div class="stat-icon"><i class="bi bi-people"></i></div>
                 <div class="stat-value">@(ViewBag.TotalClients ?? 0)</div>
                 <div class="stat-label">Total Clients</div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-amber">
                 <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
                 <div class="stat-value">₹@(((decimal?)ViewBag.TotalIncome ?? 0).ToString("N0"))</div>
                 <div class="stat-label">Total Income</div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card stat-card si-rose">
                 <div class="stat-icon"><i class="bi bi-receipt"></i></div>
                 <div class="stat-value">₹@(((decimal?)ViewBag.TotalExpenses ?? 0).ToString("N0"))</div>
@@ -109,27 +95,6 @@ else
 
     <!-- Secondary stats -->
     <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-green">
-                <div class="stat-icon"><i class="bi bi-arrow-right-circle"></i></div>
-                <div class="stat-value">@(ViewBag.ConvertedCount ?? 0)</div>
-                <div class="stat-label">Converted</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-amber">
-                <div class="stat-icon"><i class="bi bi-percent"></i></div>
-                <div class="stat-value">@(ViewBag.ConversionRate ?? 0)%</div>
-                <div class="stat-label">Conversion Rate</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-rose">
-                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                <div class="stat-value">@(ViewBag.PendingClients ?? 0)</div>
-                <div class="stat-label">Pending Payments</div>
-            </div>
-        </div>
         <div class="col-sm-6 col-xl-3">
             <div class="card stat-card si-indigo">
                 <div class="stat-icon"><i class="bi bi-bell"></i></div>
@@ -143,16 +108,7 @@ else
     @if (userRole == "Admin")
     {
         <div class="row g-3 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <a asp-controller="Inquiry" asp-action="Create" class="card text-decoration-none quick-link-card">
-                    <div class="card-body d-flex align-items-center gap-3 py-3">
-                        <div class="stat-icon si-indigo" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-plus-circle" style="font-size:.9rem;"></i></div>
-                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">New Inquiry</div></div>
-                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-6">
                 <a asp-controller="Payment" asp-action="Create" class="card text-decoration-none quick-link-card">
                     <div class="card-body d-flex align-items-center gap-3 py-3">
                         <div class="stat-icon si-green" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-cash-coin" style="font-size:.9rem;"></i></div>
@@ -161,7 +117,7 @@ else
                     </div>
                 </a>
             </div>
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-6">
                 <a asp-controller="Expense" asp-action="Create" class="card text-decoration-none quick-link-card">
                     <div class="card-body d-flex align-items-center gap-3 py-3">
                         <div class="stat-icon si-rose" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-receipt" style="font-size:.9rem;"></i></div>
@@ -170,7 +126,7 @@ else
                     </div>
                 </a>
             </div>
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-4 col-sm-6">
                 <a asp-controller="Configuration" asp-action="Index" class="card text-decoration-none quick-link-card">
                     <div class="card-body d-flex align-items-center gap-3 py-3">
                         <div class="stat-icon si-amber" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-sliders" style="font-size:.9rem;"></i></div>
@@ -203,19 +159,25 @@ else
                         <div class="table-responsive">
                             <table class="table table-clean mb-0">
                                 <thead><tr>
-                                    <th>Hotel</th><th>Client</th><th>Status</th>
+                                    <th>Hotel</th><th>Client</th><th class="table-mobile-hide">Ref</th><th>Status</th>
                                     <th class="table-mobile-hide">Follow-up</th><th class="table-mobile-hide">Date</th>
                                 </tr></thead>
                                 <tbody>
                                     @foreach (var r in recent)
                                     {
-                                        var isConverted = Convert.ToBoolean(r["is_converted"]);
                                         <tr>
-                                            <td class="fw-500">
-                                                @r["hotel_name"]
-                                                @if (isConverted) { <span class="ms-1" style="background:#d1fae5;color:#065f46;font-size:.65rem;padding:1px 5px;border-radius:20px;font-weight:700;">✓</span> }
-                                            </td>
+                                            <td class="fw-500">@r["hotel_name"]</td>
                                             <td style="font-size:.82rem;">@r["client_name"]</td>
+                                            <td class="table-mobile-hide" style="font-size:.72rem;">
+                                                @if (r["client_ref"] is not null and not DBNull)
+                                                {
+                                                    <span style="font-family:monospace;color:var(--brand);font-weight:600;">@r["client_ref"]</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
                                             <td>
                                                 @if (r["status_name"] != null)
                                                 {<span style="background:#fef9ec;color:#92400e;font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@r["status_name"]</span>}

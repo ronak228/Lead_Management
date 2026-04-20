@@ -1,10 +1,5 @@
 @model ClientFormViewModel
 
-@if (Model.Client.SourceInquiryId.HasValue)
-{
-    <input type="hidden" name="Client.SourceInquiryId" value="@Model.Client.SourceInquiryId" />
-}
-
 @{
     bool isNew = Model.Client.Id == 0;
 }
@@ -44,10 +39,6 @@
                         <label class="form-label">Email</label>
                         <input type="email" name="Client.Email" value="@Model.Client.Email"
                                class="form-control" placeholder="contact@company.com" />
-                        @if (isNew)
-                        {
-                            <div class="form-text"><i class="bi bi-link-45deg me-1"></i>Providing an email automatically generates a secure setup link for the client to set their own password.</div>
-                        }
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">City</label>
@@ -71,11 +62,6 @@
                                 <option value="@m.Id" selected="@(Model.Client.ModuleId == m.Id)">@m.Name</option>
                             }
                         </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Room Size / Unit</label>
-                        <input type="text" name="Client.RoomSize" value="@Model.Client.RoomSize"
-                               class="form-control" placeholder="e.g. 120 rooms, 2BHK…" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Total Contract Amount</label>

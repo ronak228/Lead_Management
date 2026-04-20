@@ -1,4 +1,24 @@
 @model InquiryFormViewModel
+@{
+    var formRole = Context.Session.GetString("UserRole") ?? "";
+    bool formIsClient = formRole == "Client";
+}
+
+@* Client linkage — hidden field only for clients *@
+@if (formIsClient)
+{
+    <input type="hidden" name="Inquiry.ClientId" value="@Model.Inquiry.ClientId" />
+}
+
+@if (formIsClient && Model.Inquiry.ClientId.HasValue)
+{
+    <div class="alert alert-light border mb-3 py-2 px-3 d-flex align-items-center gap-2" style="font-size:.82rem;">
+        <i class="bi bi-person-badge" style="color:var(--brand);"></i>
+        <span>Submitting as <strong>@(Model.Inquiry.ClientCompany ?? Model.Inquiry.ClientRef)</strong>
+            <span style="font-family:monospace;color:var(--brand);font-weight:700;margin-left:4px;">@Model.Inquiry.ClientRef</span>
+        </span>
+    </div>
+}
 
 <div class="row g-4">
     <div class="col-lg-8">
@@ -63,38 +83,26 @@
                         }
                     </select>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Status</label>
-                    <select name="Inquiry.StatusId" class="form-select">
-                        <option value="">— Select Status —</option>
-                        @foreach (var s in Model.Statuses)
-                        {
-                            var selStatus = Model.Inquiry.StatusId == s.Id;
-                            <option value="@s.Id" selected="@selStatus">@s.Name</option>
-                        }
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Follow-up Date</label>
-                    <input type="date" name="Inquiry.FollowupDate"
-                           value="@(Model.Inquiry.FollowupDate.HasValue ? Model.Inquiry.FollowupDate.Value.ToString("yyyy-MM-dd") : "")"
-                           class="form-control" />
-                </div>
-                <div>
-                    <label class="form-label d-block">Payment Received</label>
-                    <div class="d-flex gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="Inquiry.PaymentReceived"
-                                   id="prYes" value="true" @(Model.Inquiry.PaymentReceived ? "checked" : "") />
-                            <label class="form-check-label" for="prYes" style="font-size:.84rem;">Yes</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="Inquiry.PaymentReceived"
-                                   id="prNo" value="false" @(!Model.Inquiry.PaymentReceived ? "checked" : "") />
-                            <label class="form-check-label" for="prNo" style="font-size:.84rem;">No</label>
-                        </div>
+                @if (formIsClient)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="Inquiry.StatusId" class="form-select">
+                            <option value="">— Select Status —</option>
+                            @foreach (var s in Model.Statuses)
+                            {
+                                var selStatus = Model.Inquiry.StatusId == s.Id;
+                                <option value="@s.Id" selected="@selStatus">@s.Name</option>
+                            }
+                        </select>
                     </div>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label">Follow-up Date</label>
+                        <input type="date" name="Inquiry.FollowupDate"
+                               value="@(Model.Inquiry.FollowupDate.HasValue ? Model.Inquiry.FollowupDate.Value.ToString("yyyy-MM-dd") : "")"
+                               class="form-control" />
+                    </div>
+                }
             </div>
         </div>
 

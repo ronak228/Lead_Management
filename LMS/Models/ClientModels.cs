@@ -1,10 +1,11 @@
+using LeadManagementSystem.Helpers;
+
 namespace LeadManagementSystem.Models;
 
 public class Client
 {
     public int      Id               { get; set; }
     public string   ClientRef        { get; set; } = "";
-    public int?     UserId           { get; set; }
     public string   CompanyName      { get; set; } = "";
     public string   ContactPerson    { get; set; } = "";
     public string   Phone            { get; set; } = "";
@@ -50,4 +51,5 @@ public class ClientListViewModel
     public List<Client> Clients      { get; set; } = new();
     public string?      Search       { get; set; }
     public string?      FilterStatus { get; set; }
+    public PaginationInfo? Pagination { get; set; }
 }

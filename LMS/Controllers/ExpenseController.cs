@@ -21,8 +21,26 @@ public class ExpenseController : Controller
     }
 
     // ── LIST ─────────────────────────────────────────────────
-    public async Task<IActionResult> Index(int? categoryId, string? dateFrom, string? dateTo, string? search)
+    public async Task<IActionResult> Index(int? categoryId, string? dateFrom, string? dateTo, string? search, int page = 1)
     {
+        const int pageSize = 25;
+        var par = new Dictionary<string, object?>();
+
+        var whereClause = " WHERE e.is_deleted=FALSE";
+        if (categoryId.HasValue)              { whereClause += " AND e.category_id=@cat"; par["@cat"] = categoryId.Value; }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            whereClause += " AND (LOWER(e.from_name) LIKE @s OR LOWER(e.to_name) LIKE @s)";
+            par["@s"] = $"%{search.Trim().ToLower()}%";
+        }
+        if (!string.IsNullOrWhiteSpace(dateFrom)) { whereClause += " AND e.expense_date >= @df"; par["@df"] = dateFrom; }
+        if (!string.IsNullOrWhiteSpace(dateTo))   { whereClause += " AND e.expense_date <= @dt"; par["@dt"] = dateTo; }
+
+        // Count total
+        var countSql = @"SELECT COUNT(*) FROM expenses e" + whereClause;
+        var totalRecords = Convert.ToInt32(await _db.ExecuteScalarAsync(countSql, par));
+        var (skip, take, totalPages) = PaginationHelper.GetPaginationParams(page, totalRecords, pageSize);
+
         var sql = @"
             SELECT e.id, e.expense_date, e.category_id, e.from_name, e.to_name,
                    e.amount, e.payment_mode, e.cheque_no, e.bank_name, e.transaction_id,
@@ -31,19 +49,8 @@ public class ExpenseController : Controller
                    cat.name AS category_name, u.full_name AS created_by_name
             FROM expenses e
             LEFT JOIN cfg_category cat ON cat.id=e.category_id
-            LEFT JOIN users u ON u.id=e.created_by
-            WHERE e.is_deleted=FALSE";
-
-        var par = new Dictionary<string, object?>();
-        if (categoryId.HasValue)              { sql += " AND e.category_id=@cat"; par["@cat"] = categoryId.Value; }
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            sql += " AND (LOWER(e.from_name) LIKE @s OR LOWER(e.to_name) LIKE @s)";
-            par["@s"] = $"%{search.Trim().ToLower()}%";
-        }
-        if (!string.IsNullOrWhiteSpace(dateFrom)) { sql += " AND e.expense_date >= @df"; par["@df"] = dateFrom; }
-        if (!string.IsNullOrWhiteSpace(dateTo))   { sql += " AND e.expense_date <= @dt"; par["@dt"] = dateTo; }
-        sql += " ORDER BY e.expense_date DESC, e.created_at DESC";
+            LEFT JOIN users u ON u.id=e.created_by" +
+            whereClause + $" ORDER BY e.expense_date DESC, e.created_at DESC LIMIT {take} OFFSET {skip}";
 
         var rows       = await _db.QueryAsync(sql, par);
         var categories = await LoadCategories();
@@ -59,7 +66,14 @@ public class ExpenseController : Controller
             CategoryId  = categoryId,
             DateFrom    = dateFrom,
             DateTo      = dateTo,
-            Search      = search
+            Search      = search,
+            Pagination = new PaginationInfo
+            {
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = totalPages
+            }
         });
     }
 
@@ -99,7 +113,8 @@ public class ExpenseController : Controller
                 vm.Categories = await LoadCategories();
                 return View(vm);
             }
-            var dir = Path.Combine(_env.WebRootPath, "uploads", "expenses");
+            // SECURITY: Store in SecureUploads outside wwwroot (not publicly accessible)
+            var dir = Path.Combine(_env.ContentRootPath, "SecureUploads", "expenses");
             Directory.CreateDirectory(dir);
             savedFile = $"{Guid.NewGuid()}{ext}";
             using var fs = System.IO.File.Create(Path.Combine(dir, savedFile));
@@ -173,7 +188,8 @@ public class ExpenseController : Controller
                 vm.Categories = await LoadCategories();
                 return View(vm);
             }
-            var dir = Path.Combine(_env.WebRootPath, "uploads", "expenses");
+            // SECURITY: Store in SecureUploads outside wwwroot (not publicly accessible)
+            var dir = Path.Combine(_env.ContentRootPath, "SecureUploads", "expenses");
             Directory.CreateDirectory(dir);
             savedFile = $"{Guid.NewGuid()}{ext}";
             using var fs = System.IO.File.Create(Path.Combine(dir, savedFile));
@@ -311,4 +327,57 @@ public class ExpenseController : Controller
         CreatedAt     = Convert.ToDateTime(r["created_at"]),
         UpdatedAt     = Convert.ToDateTime(r["updated_at"])
     };
+
+    // ── DOWNLOAD ATTACHMENT (Secured - Auth Required) ─────────
+    [SessionAuth(SessionHelper.RoleAdmin, SessionHelper.RoleEmployee)]
+    public async Task<IActionResult> Download(int id, string filename)
+    {
+        // Verify expense exists
+        var expense = await GetById(id);
+        if (expense == null) return NotFound();
+
+        // Verify filename matches stored attachment
+        if (expense.Attachment != filename)
+        {
+            TempData["Error"] = "Invalid file request.";
+            return RedirectToAction("Details", new { id });
+        }
+
+        // Build secure path
+        var dir = Path.Combine(_env.ContentRootPath, "SecureUploads", "expenses");
+        var filePath = Path.Combine(dir, filename);
+
+        // Validate path is within SecureUploads (prevent directory traversal)
+        var fullPath = Path.GetFullPath(filePath);
+        var fullDir = Path.GetFullPath(dir);
+        if (!fullPath.StartsWith(fullDir))
+        {
+            TempData["Error"] = "Invalid file path.";
+            return RedirectToAction("Details", new { id });
+        }
+
+        // Check file exists
+        if (!System.IO.File.Exists(filePath))
+        {
+            TempData["Error"] = "File not found.";
+            return RedirectToAction("Details", new { id });
+        }
+
+        // Serve file
+        var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+        var mimeType = GetMimeType(filename);
+        return File(fileBytes, mimeType, filename);
+    }
+
+    private static string GetMimeType(string filename)
+    {
+        var ext = Path.GetExtension(filename).ToLower();
+        return ext switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
+    }
 }

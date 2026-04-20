@@ -22,24 +22,31 @@ public class UserManagementController : Controller
     public UserManagementController(DbHelper db) => _db = db;
 
     // ── LIST ─────────────────────────────────────────────────
-    public async Task<IActionResult> Index(string? search, string? filterRole)
+    public async Task<IActionResult> Index(string? search, string? filterRole, int page = 1)
     {
-        var sql = @"SELECT id, full_name, email, role, is_active, created_at
-                    FROM users WHERE 1=1";
+        const int pageSize = 25;
         var p = new Dictionary<string, object?>();
 
+        var whereClause = " WHERE (is_deleted IS NULL OR is_deleted = FALSE)";
         if (!string.IsNullOrWhiteSpace(search))
         {
-            sql += " AND (LOWER(full_name) LIKE @s OR LOWER(email) LIKE @s)";
+            whereClause += " AND (LOWER(full_name) LIKE @s OR LOWER(email) LIKE @s)";
             p["@s"] = $"%{search.Trim().ToLower()}%";
         }
         if (!string.IsNullOrWhiteSpace(filterRole) && AllowedRoles.Contains(filterRole))
         {
-            sql += " AND role=@r";
+            whereClause += " AND role=@r";
             p["@r"] = filterRole;
         }
 
-        sql += " ORDER BY created_at DESC";
+        // Count total
+        var countSql = @"SELECT COUNT(*) FROM users" + whereClause;
+        var totalRecords = Convert.ToInt32(await _db.ExecuteScalarAsync(countSql, p));
+        var (skip, take, totalPages) = PaginationHelper.GetPaginationParams(page, totalRecords, pageSize);
+
+        var sql = @"SELECT id, full_name, email, role, is_active, created_at
+                    FROM users" + whereClause +
+            $" ORDER BY created_at DESC LIMIT {take} OFFSET {skip}";
 
         var rows = await _db.QueryAsync(sql, p);
         var users = rows.Select(r => new UserListItem
@@ -52,8 +59,15 @@ public class UserManagementController : Controller
             CreatedAt = Convert.ToDateTime(r["created_at"])
         }).ToList();
 
-        ViewBag.Search     = search;
+        ViewBag.Search = search;
         ViewBag.FilterRole = filterRole;
+        ViewBag.Pagination = new PaginationInfo
+        {
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalRecords = totalRecords,
+            TotalPages = totalPages
+        };
         return View(users);
     }
 

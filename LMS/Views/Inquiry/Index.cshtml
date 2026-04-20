@@ -20,9 +20,12 @@
             <i class="bi bi-file-earmark-excel me-1"></i>Export
         </a>
         }
+        @if (isClient)
+        {
         <a asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
             <i class="bi bi-plus me-1"></i>New Inquiry
         </a>
+        }
     </div>
 </div>
 
@@ -126,6 +129,7 @@
                             <th>#</th>
                             <th>Hotel Name</th>
                             @if (!isClient) { <th class="table-mobile-hide">Client</th> }
+                            @if (!isClient) { <th class="table-mobile-hide">Client ID</th> }
                             <th class="table-mobile-hide">Contact</th>
                             <th class="table-mobile-hide">City</th>
                             <th class="table-mobile-hide">Module</th>
@@ -143,14 +147,26 @@
                                 <td class="text-muted">@sr</td>
                                 <td class="fw-500">
                                     @inq.HotelName
-                                    @if (inq.IsConverted)
-                                    {
-                                        <span class="ms-1" style="background:#d1fae5;color:#065f46;font-size:.67rem;padding:2px 6px;border-radius:20px;font-weight:700;">CONVERTED</span>
-                                    }
                                 </td>
                                 @if (!isClient)
                                 {
                                     <td class="table-mobile-hide">@inq.ClientName</td>
+                                }
+                                @if (!isClient)
+                                {
+                                    <td class="table-mobile-hide" style="font-size:.72rem;">
+                                        @if (inq.ClientId.HasValue)
+                                        {
+                                            <a asp-controller="Client" asp-action="Details" asp-route-id="@inq.ClientId"
+                                               style="color:var(--brand);font-weight:600;text-decoration:none;font-family:monospace;">
+                                                @(string.IsNullOrEmpty(inq.ClientRef) ? $"#{inq.ClientId}" : inq.ClientRef)
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
                                 }
                                 <td class="table-mobile-hide" style="font-size:.8rem;">@inq.ClientNumber</td>
                                 <td class="table-mobile-hide" style="font-size:.8rem;">@(inq.CityName ?? "—")</td>
@@ -159,15 +175,20 @@
                                     {
                                         <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@inq.ModuleName</span>
                                     }
-                                    else { <span class="text-muted">—</span> }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
                                 </td>
                                 <td>
                                     @if (inq.StatusName != null)
                                     {
-                                        var badgeStyle = inq.IsConverted ? "background:#d1fae5;color:#065f46;" : "background:#fef9ec;color:#92400e;";
-                                        <span style="@badgeStyle font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@inq.StatusName</span>
+                                        <span style="background:#fef9ec;color:#92400e;font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@inq.StatusName</span>
                                     }
-                                    else { <span class="text-muted">—</span> }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
                                 </td>
                                 @if (!isClient)
                                 {
@@ -182,7 +203,10 @@
                                             @if (isToday)   { <i class="bi bi-bell ms-1 text-warning"></i> }
                                         </span>
                                     }
-                                    else { <span class="text-muted">—</span> }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
                                 </td>
                                 }
                                 <td class="text-muted table-mobile-hide" style="font-size:.75rem;">@inq.CreatedAt.ToString("dd MMM yy")</td>
@@ -192,31 +216,11 @@
                                            class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        @if (!inq.IsConverted)
+                                        @if (isClient /*&& inq.StatusName == "Received"*/)
                                         {
                                             <a asp-action="Edit" asp-route-id="@inq.Id"
                                                class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
                                                 <i class="bi bi-pencil"></i>
-                                            </a>
-                                            @if (!isClient)
-                                            {
-                                            <a asp-controller="Inquiry" asp-action="ConvertToClient" asp-route-id="@inq.Id"
-                                               class="btn btn-sm btn-sm-icon btn-outline-success" title="Convert to Client">
-                                                <i class="bi bi-arrow-right-circle"></i>
-                                            </a>
-                                            <form asp-action="Delete" asp-route-id="@inq.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('Delete this inquiry?')">
-                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                            }
-                                        }
-                                        else if (!isClient)
-                                        {
-                                            <a asp-controller="Client" asp-action="Details" asp-route-id="@inq.ConvertedClientId"
-                                               class="btn btn-sm btn-outline-success" style="font-size:.72rem;" title="View Client">
-                                                <i class="bi bi-person-check me-1"></i>Client
                                             </a>
                                         }
                                     </div>

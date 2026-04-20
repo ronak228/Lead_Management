@@ -34,16 +34,46 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row row-cols-3 g-3 mb-4 text-center">
+                            <div class="col">
+                                <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Contract Total</div>
+                                <div style="font-size:1.05rem;font-weight:700;">₹@Model.Client.TotalAmount.ToString("N0")</div>
+                            </div>
+                            <div class="col">
+                                <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Paid</div>
+                                <div style="font-size:1.05rem;font-weight:700;color:#16a34a;">₹@Model.Client.TotalPaid.ToString("N0")</div>
+                            </div>
+                            <div class="col">
+                                <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">Remaining</div>
+                                <div style="font-size:1.05rem;font-weight:700;color:#dc2626;">₹@Model.Client.TotalRemaining.ToString("N0")</div>
+                            </div>
+                        </div>
                     }
                     else
                     {
                         <div class="mb-3">
                             <label class="form-label">Client <span class="text-danger">*</span></label>
-                            <input type="number" name="Payment.ClientId" value="@Model.Payment.ClientId" class="form-control" placeholder="Client ID" min="1" required />
+                            <select id="clientSelect" name="Payment.ClientId" class="form-select" required>
+                                <option value="">Select Client</option>
+                                @foreach (var client in Model.Clients)
+                                {
+                                    <option value="@client.Id" selected="@(Model.Payment.ClientId == client.Id)">@client.CompanyName (@client.ClientRef)</option>
+                                }
+                            </select>
+                            <div class="form-text">Select a client to load contract totals before saving payment.</div>
                         </div>
                     }
 
                     <div class="row g-3">
+                        @if (Model.Client != null)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label">Contract Total (₹)</label>
+                                <input type="number" name="Payment.TotalAmount" value="@(Model.Payment.TotalAmount > 0 ? Model.Payment.TotalAmount : Model.Client?.TotalAmount ?? 0)"
+                                       class="form-control" placeholder="0.00" min="0" step="0.01" />
+                                <div class="form-text">Enter contract total to update the client&apos;s total amount.</div>
+                            </div>
+                        }
                         <div class="col-md-6">
                             <label class="form-label">Amount (₹) <span class="text-danger">*</span></label>
                             <input type="number" name="Payment.Amount" value="@Model.Payment.Amount"
@@ -128,5 +158,15 @@
     }
     modeEl.addEventListener('change', update);
     update();
+
+    var clientSelect = document.getElementById('clientSelect');
+    if (clientSelect) {
+        clientSelect.addEventListener('change', function () {
+            var clientId = this.value;
+            if (!clientId) return;
+            var url = '@Url.Action("Create", "Payment")';
+            window.location.href = url + '?clientId=' + encodeURIComponent(clientId);
+        });
+    }
 })();
 </script>

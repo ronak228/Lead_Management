@@ -1,3 +1,5 @@
+using LeadManagementSystem.Helpers;
+
 namespace LeadManagementSystem.Models;
 
 public class Payment
@@ -7,7 +9,8 @@ public class Payment
     public string?  ClientRef       { get; set; }
     public string?  CompanyName     { get; set; }
     public string?  ContactPerson   { get; set; }
-    public decimal  Amount        { get; set; }
+    public decimal  TotalAmount    { get; set; }
+    public decimal  Amount         { get; set; }
     public string   PaymentMode   { get; set; } = "Cash";
     public string?  ChequeNo      { get; set; }
     public string?  BankName      { get; set; }
@@ -41,4 +44,5 @@ public class PaymentListViewModel
     public string?       FilterMode  { get; set; }
     public string?       DateFrom    { get; set; }
     public string?       DateTo      { get; set; }
+    public PaginationInfo? Pagination { get; set; }
 }

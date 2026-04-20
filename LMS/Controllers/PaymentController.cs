@@ -3,6 +3,7 @@ using LeadManagementSystem.Data;
 using LeadManagementSystem.Filters;
 using LeadManagementSystem.Helpers;
 using LeadManagementSystem.Models;
+using LeadManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LeadManagementSystem.Controllers;
@@ -13,18 +14,24 @@ public class PaymentController : Controller
 {
     private readonly DbHelper _db;
     private readonly IWebHostEnvironment _env;
+    private readonly IEmailService _emailService;
 
-    public PaymentController(DbHelper db, IWebHostEnvironment env)
+    public PaymentController(DbHelper db, IWebHostEnvironment env, IEmailService emailService)
     {
         _db  = db;
         _env = env;
+        _emailService = emailService;
     }
 
     // ── LIST ─────────────────────────────────────────────────
-    public async Task<IActionResult> Index(int? clientId, string? dateFrom, string? dateTo, string? search)
+    public async Task<IActionResult> Index(int? clientId, int? filterClientId, string? dateFrom, string? dateTo, string? search, int page = 1)
     {
         var role   = HttpContext.Session.GetString(SessionHelper.UserRole);
         var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
+
+        // Allow filterClientId as well as clientId parameter
+        if (filterClientId.HasValue && !clientId.HasValue)
+            clientId = filterClientId.Value;
 
         // Client: auto-scope to their own client record
         if (role == SessionHelper.RoleClient && userId.HasValue)
@@ -38,6 +45,26 @@ public class PaymentController : Controller
             clientId = myClient.Id;
         }
 
+        const int pageSize = 25;
+        var par = new Dictionary<string, object?>();
+        
+        var whereClause = " WHERE p.is_deleted=FALSE AND c.is_deleted=FALSE";
+        if (clientId.HasValue)    { whereClause += " AND p.client_id=@cid";  par["@cid"] = clientId.Value; }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            whereClause += " AND (LOWER(c.company_name) LIKE @s OR c.client_ref LIKE @s)";
+            par["@s"] = $"%{search.Trim().ToLower()}%";
+        }
+        if (!string.IsNullOrWhiteSpace(dateFrom)) { whereClause += " AND p.payment_date >= @df"; par["@df"] = dateFrom; }
+        if (!string.IsNullOrWhiteSpace(dateTo))   { whereClause += " AND p.payment_date <= @dt"; par["@dt"] = dateTo; }
+
+        // Count total
+        var countSql = @"
+            SELECT COUNT(*) FROM payments p
+            JOIN users c ON c.id=p.client_id" + whereClause;
+        var totalRecords = Convert.ToInt32(await _db.ExecuteScalarAsync(countSql, par));
+        var (skip, take, totalPages) = PaginationHelper.GetPaginationParams(page, totalRecords, pageSize);
+
         var sql = @"
             SELECT p.id, p.client_id, p.amount, p.payment_mode, p.cheque_no,
                    p.bank_name, p.transaction_id, p.payment_date, p.note, p.proof_file,
@@ -45,20 +72,9 @@ public class PaymentController : Controller
                    c.client_ref, c.company_name, c.contact_person,
                    u.full_name AS created_by_name
             FROM payments p
-            JOIN clients c ON c.id=p.client_id
-            LEFT JOIN users u ON u.id=p.created_by
-            WHERE p.is_deleted=FALSE AND c.is_deleted=FALSE";
-
-        var par = new Dictionary<string, object?>();
-        if (clientId.HasValue)    { sql += " AND p.client_id=@cid";  par["@cid"] = clientId.Value; }
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            sql += " AND (LOWER(c.company_name) LIKE @s OR c.client_ref LIKE @s)";
-            par["@s"] = $"%{search.Trim().ToLower()}%";
-        }
-        if (!string.IsNullOrWhiteSpace(dateFrom)) { sql += " AND p.payment_date >= @df"; par["@df"] = dateFrom; }
-        if (!string.IsNullOrWhiteSpace(dateTo))   { sql += " AND p.payment_date <= @dt"; par["@dt"] = dateTo; }
-        sql += " ORDER BY p.payment_date DESC, p.created_at DESC";
+            JOIN users c ON c.id=p.client_id
+            LEFT JOIN users u ON u.id=p.created_by" +
+            whereClause + $" ORDER BY p.payment_date DESC, p.created_at DESC LIMIT {take} OFFSET {skip}";
 
         var rows = await _db.QueryAsync(sql, par);
         decimal total = 0;
@@ -82,7 +98,14 @@ public class PaymentController : Controller
             CompanyName  = filterClient?.CompanyName,
             DateFrom     = dateFrom,
             DateTo       = dateTo,
-            Search       = search
+            Search       = search,
+            Pagination = new PaginationInfo
+            {
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = totalPages
+            }
         });
     }
 
@@ -136,7 +159,7 @@ public class PaymentController : Controller
                 vm.Client = await GetClientById(vm.Payment.ClientId);
                 return View(vm);
             }
-            var dir = Path.Combine(_env.WebRootPath, "uploads", "payments");
+            var dir = Path.Combine(_env.ContentRootPath, "SecureUploads", "payments");
             Directory.CreateDirectory(dir);
             savedFile = $"{Guid.NewGuid()}{ext}";
             using var fs = System.IO.File.Create(Path.Combine(dir, savedFile));
@@ -164,6 +187,24 @@ public class PaymentController : Controller
                 ["@cb"]  = (object?)userId ?? DBNull.Value
             });
 
+        if (vm.Payment.TotalAmount > 0)
+        {
+            await _db.ExecuteNonQueryAsync(
+                "UPDATE users SET total_amount=@ta WHERE id=@id",
+                new() { ["@ta"] = vm.Payment.TotalAmount, ["@id"] = vm.Payment.ClientId });
+        }
+
+        // Send payment receipt email
+        var client = await GetClientById(vm.Payment.ClientId);
+        if (client != null)
+        {
+            await _emailService.SendPaymentReceiptAsync(
+                client.Email ?? "",
+                client.ClientRef ?? "",
+                vm.Payment.Amount,
+                vm.Payment.PaymentMode ?? "Cash");
+        }
+
         TempData["Success"] = "Payment recorded successfully.";
         return RedirectToAction("Details", "Client", new { id = vm.Payment.ClientId });
     }
@@ -183,6 +224,108 @@ public class PaymentController : Controller
                 return RedirectToAction("AccessDenied", "Auth");
         }
         return View(p);
+    }
+
+    // ── EDIT GET ─────────────────────────────────────────────
+    [SessionAuth(SessionHelper.RoleAdmin, SessionHelper.RoleEmployee)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var payment = await GetPaymentById(id);
+        if (payment == null) return NotFound();
+        
+        var vm = new PaymentFormViewModel
+        {
+            Payment = payment,
+            Client = await GetClientById(payment.ClientId),
+            Clients = await GetActiveClients()
+        };
+        return View(vm);
+    }
+
+    // ── EDIT POST ────────────────────────────────────────────
+    [HttpPost]
+    [SessionAuth(SessionHelper.RoleAdmin, SessionHelper.RoleEmployee)]
+    public async Task<IActionResult> Edit(int id, PaymentFormViewModel vm, IFormFile? proofFile)
+    {
+        var existing = await GetPaymentById(id);
+        if (existing == null) return NotFound();
+
+        if (vm.Payment.ClientId <= 0 || vm.Payment.Amount <= 0)
+        {
+            TempData["Error"] = "Client and a positive Amount are required.";
+            vm.Client = await GetClientById(vm.Payment.ClientId);
+            return View(vm);
+        }
+
+        try
+        {
+            string? savedFile = existing.ProofFile;
+            
+            // Handle proof file upload/replacement
+            if (proofFile != null && proofFile.Length > 0)
+            {
+                const long maxBytes = 2 * 1024 * 1024;
+                if (proofFile.Length > maxBytes)
+                {
+                    TempData["Error"] = "Proof file must be 2 MB or smaller.";
+                    vm.Client = await GetClientById(vm.Payment.ClientId);
+                    return View(vm);
+                }
+                var ext = Path.GetExtension(proofFile.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png", ".pdf" }.Contains(ext))
+                {
+                    TempData["Error"] = "Only JPG, PNG, or PDF files are allowed.";
+                    vm.Client = await GetClientById(vm.Payment.ClientId);
+                    return View(vm);
+                }
+                
+                // Delete old file if exists
+                if (!string.IsNullOrWhiteSpace(existing.ProofFile))
+                {
+                    var oldPath = Path.Combine(_env.ContentRootPath, "SecureUploads", "payments", existing.ProofFile);
+                    if (System.IO.File.Exists(oldPath))
+                        System.IO.File.Delete(oldPath);
+                }
+                
+                // Save new file
+                var dir = Path.Combine(_env.ContentRootPath, "SecureUploads", "payments");
+                Directory.CreateDirectory(dir);
+                savedFile = $"{Guid.NewGuid()}{ext}";
+                using var fs = System.IO.File.Create(Path.Combine(dir, savedFile));
+                await proofFile.CopyToAsync(fs);
+            }
+
+            var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
+            await _db.ExecuteNonQueryAsync(@"
+                UPDATE payments SET
+                  client_id=@cid, amount=@am, payment_mode=@pm, cheque_no=@cn, 
+                  bank_name=@bn, transaction_id=@ti, payment_date=@pd, note=@no, 
+                  proof_file=@pf, updated_by=@ub, updated_at=NOW()
+                WHERE id=@id",
+                new()
+                {
+                    ["@cid"] = vm.Payment.ClientId,
+                    ["@am"]  = vm.Payment.Amount,
+                    ["@pm"]  = vm.Payment.PaymentMode ?? "Cash",
+                    ["@cn"]  = (object?)(vm.Payment.ChequeNo?.Trim()) ?? DBNull.Value,
+                    ["@bn"]  = (object?)(vm.Payment.BankName?.Trim()) ?? DBNull.Value,
+                    ["@ti"]  = (object?)(vm.Payment.TransactionId?.Trim()) ?? DBNull.Value,
+                    ["@pd"]  = vm.Payment.PaymentDate.Date,
+                    ["@no"]  = (object?)(vm.Payment.Note?.Trim()) ?? DBNull.Value,
+                    ["@pf"]  = (object?)savedFile ?? DBNull.Value,
+                    ["@ub"]  = (object?)userId ?? DBNull.Value,
+                    ["@id"]  = id
+                });
+
+            TempData["Success"] = "Payment updated successfully.";
+            return RedirectToAction("Details", "Client", new { id = vm.Payment.ClientId });
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"An error occurred: {ex.Message}";
+            vm.Client = await GetClientById(vm.Payment.ClientId);
+            return View(vm);
+        }
     }
 
     // ── SOFT DELETE ──────────────────────────────────────────
@@ -211,7 +354,7 @@ public class PaymentController : Controller
                    c.client_ref, c.company_name, c.contact_person,
                    u.full_name AS created_by_name, p.created_at
             FROM payments p
-            JOIN clients c ON c.id=p.client_id
+            JOIN users c ON c.id=p.client_id
             LEFT JOIN users u ON u.id=p.created_by
             WHERE p.is_deleted=FALSE AND c.is_deleted=FALSE";
         var par = new Dictionary<string, object?>();
@@ -252,8 +395,9 @@ public class PaymentController : Controller
     // ── private helpers ──────────────────────────────────────
     private async Task<Client?> GetClientByUserId(int userId)
     {
+        // Users ARE clients now, so look up user directly
         var rows = await _db.QueryAsync(
-            "SELECT id, client_ref, company_name, contact_person, phone, total_amount FROM clients WHERE user_id=@uid AND is_deleted=FALSE LIMIT 1",
+            "SELECT id, client_ref, company_name, contact_person, phone, total_amount, COALESCE((SELECT SUM(pa.amount) FROM payments pa WHERE pa.client_id=u.id AND pa.is_deleted=FALSE),0) AS total_paid FROM users u WHERE id=@uid AND is_deleted=FALSE",
             new() { ["@uid"] = userId });
         if (rows.Count == 0) return null;
         var r = rows[0];
@@ -264,7 +408,8 @@ public class PaymentController : Controller
             CompanyName   = r["company_name"]?.ToString() ?? "",
             ContactPerson = r["contact_person"]?.ToString() ?? "",
             Phone         = r["phone"]?.ToString() ?? "",
-            TotalAmount   = Convert.ToDecimal(r["total_amount"])
+            TotalAmount   = Convert.ToDecimal(r["total_amount"]),
+            TotalPaid     = Convert.ToDecimal(r["total_paid"])
         };
     }
 
@@ -277,7 +422,7 @@ public class PaymentController : Controller
                    c.client_ref, c.company_name, c.contact_person,
                    u.full_name AS created_by_name
             FROM payments p
-            JOIN clients c ON c.id=p.client_id
+            JOIN users c ON c.id=p.client_id
             LEFT JOIN users u ON u.id=p.created_by
             WHERE p.id=@id", new() { ["@id"] = id });
         return rows.Count == 0 ? null : MapRow(rows[0]);
@@ -286,7 +431,7 @@ public class PaymentController : Controller
     private async Task<Client?> GetClientById(int id)
     {
         var rows = await _db.QueryAsync(
-            "SELECT id, client_ref, company_name, contact_person, phone, total_amount FROM clients WHERE id=@id AND is_deleted=FALSE",
+            "SELECT id, client_ref, company_name, contact_person, phone, total_amount, COALESCE((SELECT SUM(pa.amount) FROM payments pa WHERE pa.client_id=u.id AND pa.is_deleted=FALSE),0) AS total_paid FROM users u WHERE id=@id AND is_deleted=FALSE",
             new() { ["@id"] = id });
         if (rows.Count == 0) return null;
         var r = rows[0];
@@ -297,14 +442,15 @@ public class PaymentController : Controller
             CompanyName   = r["company_name"]?.ToString() ?? "",
             ContactPerson = r["contact_person"]?.ToString() ?? "",
             Phone         = r["phone"]?.ToString() ?? "",
-            TotalAmount   = Convert.ToDecimal(r["total_amount"])
+            TotalAmount   = Convert.ToDecimal(r["total_amount"]),
+            TotalPaid     = Convert.ToDecimal(r["total_paid"])
         };
     }
 
     private async Task<List<Client>> GetActiveClients()
     {
         var rows = await _db.QueryAsync(
-            "SELECT id, client_ref, company_name, contact_person, phone, total_amount FROM clients WHERE is_deleted=FALSE AND is_active=TRUE ORDER BY company_name",
+            "SELECT id, client_ref, company_name, contact_person, phone, total_amount FROM users WHERE is_deleted=FALSE AND is_active=TRUE AND company_name IS NOT NULL AND role='Client' ORDER BY company_name",
             new());
         return rows.Select(r => new Client
         {
@@ -339,4 +485,38 @@ public class PaymentController : Controller
         CreatedAt     = Convert.ToDateTime(r["created_at"]),
         UpdatedAt     = Convert.ToDateTime(r["updated_at"])
     };
+
+    // ── SERVE PROOF FILE (authenticated, ownership-checked) ──
+    [HttpGet]
+    public async Task<IActionResult> ServeProof(int id)
+    {
+        var p = await GetPaymentById(id);
+        if (p == null) return NotFound();
+
+        var role   = HttpContext.Session.GetString(SessionHelper.UserRole);
+        var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
+
+        // Client: may only access their own payment proofs
+        if (role == SessionHelper.RoleClient && userId.HasValue)
+        {
+            var myClient = await GetClientByUserId(userId.Value);
+            if (myClient == null || myClient.Id != p.ClientId)
+                return Forbid();
+        }
+
+        if (string.IsNullOrEmpty(p.ProofFile)) return NotFound();
+
+        var filePath = Path.Combine(_env.ContentRootPath, "SecureUploads", "payments", p.ProofFile);
+        if (!System.IO.File.Exists(filePath)) return NotFound();
+
+        var ext = Path.GetExtension(p.ProofFile).ToLower();
+        var contentType = ext switch
+        {
+            ".pdf"  => "application/pdf",
+            ".png"  => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            _       => "application/octet-stream"
+        };
+        return PhysicalFile(filePath, contentType);
+    }
 }

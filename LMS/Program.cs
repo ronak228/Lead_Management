@@ -1,8 +1,24 @@
 using LeadManagementSystem.Data;
+using LeadManagementSystem.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuration: Support appsettings.json → user-secrets → environment variables
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+if (builder.Environment.IsDevelopment())
+{
+    // Load user secrets in development (run: dotnet user-secrets set "ConnectionStrings:DefaultConnection" "...")
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
+// Environment variables override all (for production deployment)
+builder.Configuration.AddEnvironmentVariables();
 
 // MVC
 builder.Services.AddControllersWithViews(options =>
@@ -22,12 +38,19 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly    = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite    = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
     options.Cookie.Name        = ".LeadMgmt.Session";
 });
 
-// DB helper
-builder.Services.AddScoped<DbHelper>(sp =>
-    new DbHelper(builder.Configuration.GetConnectionString("DefaultConnection")!));
+// Database: Use NpgsqlDataSource for connection pooling (singleton)
+// Maintains ~20 idle connections by default, significantly improves performance
+builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+// DB helper (scoped) — uses singleton NpgsqlDataSource
+builder.Services.AddScoped<DbHelper>();
+
+// Email service (scoped) — for notifications
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

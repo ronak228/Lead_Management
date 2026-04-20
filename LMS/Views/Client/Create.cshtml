@@ -6,6 +6,17 @@
     <p>Add a new client to the system</p>
 </div>
 
-<form asp-action="Create" method="post">
-    @await Html.PartialAsync("_Form", Model)
+@if (Model.Client.SourceInquiryId.HasValue)
+{
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="font-size:.88rem;">
+        <i class="bi bi-arrow-right-circle-fill fs-5"></i>
+        <div>
+            <strong>Converting Inquiry #@Model.Client.SourceInquiryId to a Client.</strong>
+            Fields have been pre-filled from the inquiry. Please review, fill in any missing details, and save.
+        </div>
+    </div>
+}
+
+<form asp-controller="Client" asp-action="Create" method="post">
+    @await Html.PartialAsync("~/Views/Client/_Form.cshtml", Model)
 </form>

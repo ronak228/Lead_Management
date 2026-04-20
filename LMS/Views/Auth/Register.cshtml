@@ -22,25 +22,22 @@
       @if (!string.IsNullOrEmpty(Model.ErrorMessage))
       {<div class="alert alert-danger py-2 small mb-3"><i class="bi bi-exclamation-triangle me-1"></i>@Model.ErrorMessage</div>}
       <form asp-action="Register" method="post" id="regForm">
-        <!-- Account Type -->
-        <div class="mb-3">
-          <label class="form-label">Account Type</label>
-          <select asp-for="Role" class="form-select" id="roleSelect" onchange="toggleClientFields()">
-            <option value="Employee">Employee / Staff</option>
-            <option value="Client">Client</option>
-          </select>
-          <div class="form-text" style="font-size:.74rem;">Choose <strong>Client</strong> if you are a hotel registering to submit inquiries.</div>
+        <!-- Account Type (Client only — Employee/Admin accounts are created by Admin) -->
+        <input type="hidden" asp-for="Role" value="Client" />
+        <div class="alert alert-info py-2 mb-3" style="font-size:.78rem;">
+          <i class="bi bi-info-circle me-1"></i>Self-registration is for <strong>Client / Hotel</strong> accounts only.
+          Employee accounts are created by an Administrator.
         </div>
 
-        <!-- Client-only fields -->
-        <div id="clientFields" style="display:none;">
+        <!-- Client fields (always shown for self-registration) -->
+        <div id="clientFields">
           <div class="mb-3">
             <label class="form-label">Company Name <span class="text-danger">*</span></label>
             <input asp-for="CompanyName" type="text" class="form-control" placeholder="e.g. Grand Hyatt Hotels"/>
           </div>
           <div class="mb-3">
             <label class="form-label">Company Phone <span class="text-danger">*</span></label>
-            <input asp-for="Phone" type="text" class="form-control" placeholder="+91 98765 43210"/>
+            <input asp-for="Phone" type="text" class="form-control" placeholder="e.g. 9876543210"/>
           </div>
         </div>
 
@@ -71,12 +68,4 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  function toggleClientFields() {
-    var role = document.getElementById('roleSelect').value;
-    document.getElementById('clientFields').style.display = role === 'Client' ? 'block' : 'none';
-  }
-  // Restore on validation error
-  toggleClientFields();
-</script>
 </body></html>

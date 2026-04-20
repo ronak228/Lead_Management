@@ -34,22 +34,32 @@ public class DashboardController : Controller
         ViewBag.UserName = HttpContext.Session.GetString(SessionHelper.UserName);
         ViewBag.UserRole = role;
 
+        // Check if client account is deactivated
         if (role == "Client" && userId.HasValue)
         {
-            var clientRows = await _db.QueryAsync(
-                "SELECT id, client_ref, company_name, total_amount FROM clients WHERE user_id=@uid AND is_deleted=FALSE LIMIT 1",
+            var clientRow = await _db.QueryAsync(
+                "SELECT is_active, client_ref, company_name, total_amount FROM users WHERE id=@uid AND is_deleted=FALSE",
                 new() { ["@uid"] = userId.Value });
-
-            if (clientRows.Count > 0)
+            
+            if (clientRow.Count > 0)
             {
-                var cid   = Convert.ToInt32(clientRows[0]["id"]);
-                var total = Convert.ToDecimal(clientRows[0]["total_amount"]);
+                if (!(bool)(clientRow[0]["is_active"] ?? true))
+                {
+                    TempData["ClientDeactivated"] = true;
+                }
+                
+                // Client accessing dashboard
+                var cid   = userId.Value;
                 var paid  = await SafeSum("SELECT COALESCE(SUM(amount),0) FROM payments WHERE client_id=@cid AND is_deleted=FALSE", new() { ["@cid"] = cid });
-                ViewBag.ClientRef   = clientRows[0]["client_ref"]?.ToString();
-                ViewBag.CompanyName = clientRows[0]["company_name"]?.ToString();
+                // Get total_amount from user record (but validate it's not negative)
+                var total = Convert.ToDecimal(clientRow[0]["total_amount"] ?? 0m);
+                if (total < 0) total = 0;
+                
+                ViewBag.ClientRef   = clientRow[0]["client_ref"]?.ToString();
+                ViewBag.CompanyName = clientRow[0]["company_name"]?.ToString();
                 ViewBag.TotalAmount = total;
                 ViewBag.TotalPaid   = paid;
-                ViewBag.Remaining   = total - paid;
+                ViewBag.Remaining   = Math.Max(0, total - paid);  // Never show negative remaining
                 try
                 {
                     ViewBag.RecentPayments = await _db.QueryAsync(@"
@@ -64,9 +74,9 @@ public class DashboardController : Controller
 
         // Admin / Employee operational stats
         ViewBag.TotalInquiries   = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE is_deleted=FALSE");
-        ViewBag.TotalClients     = await SafeCount("SELECT COUNT(*) FROM clients WHERE is_deleted=FALSE");
+        ViewBag.TotalClients     = await SafeCount("SELECT COUNT(*) FROM users WHERE is_deleted=FALSE AND company_name IS NOT NULL AND role='Client'");
         ViewBag.TotalUsers       = await SafeCount("SELECT COUNT(*) FROM users WHERE is_active=TRUE");
-        ViewBag.ConvertedCount   = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE is_converted=TRUE AND is_deleted=FALSE");
+        ViewBag.NewInquiries     = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE is_deleted=FALSE AND status_id=(SELECT id FROM cfg_status WHERE LOWER(name)='received' LIMIT 1)");
 
         // Financial totals: visible to Admin only
         if (role == SessionHelper.RoleAdmin)
@@ -77,27 +87,27 @@ public class DashboardController : Controller
 
         // Pending payment clients (total_amount > total_paid)
         ViewBag.PendingClients   = await SafeCount(@"
-            SELECT COUNT(*) FROM clients c
-            WHERE c.is_deleted=FALSE AND c.total_amount > 0
+            SELECT COUNT(*) FROM users c
+            WHERE c.is_deleted=FALSE AND c.total_amount > 0 AND c.role='Client'
             AND (SELECT COALESCE(SUM(p.amount),0) FROM payments p WHERE p.client_id=c.id AND p.is_deleted=FALSE) < c.total_amount");
-
-        // Conversion rate
-        var totalInq = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE is_deleted=FALSE");
-        var converted = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE is_converted=TRUE AND is_deleted=FALSE");
-        ViewBag.ConversionRate = totalInq > 0 ? Math.Round((double)converted / totalInq * 100, 1) : 0.0;
 
         // Today's follow-ups
         ViewBag.FollowupToday = await SafeCount(
-            "SELECT COUNT(*) FROM inquiries WHERE followup_date=CURRENT_DATE AND is_deleted=FALSE AND is_converted=FALSE");
+            "SELECT COUNT(*) FROM inquiries WHERE followup_date=CURRENT_DATE AND is_deleted=FALSE");
+
+        // Linked client inquiries count (inquiries from registered clients)
+        ViewBag.ClientInquiries = await SafeCount("SELECT COUNT(*) FROM inquiries WHERE client_id IS NOT NULL AND is_deleted=FALSE");
 
         // Recent inquiries
         try
         {
             ViewBag.RecentInquiries = await _db.QueryAsync(@"
                 SELECT i.id, i.hotel_name, i.client_name, i.client_number,
-                       st.name AS status_name, i.followup_date, i.is_converted, i.created_at
+                       st.name AS status_name, i.followup_date, i.created_at,
+                       c.client_ref, c.company_name AS client_company
                 FROM inquiries i
                 LEFT JOIN cfg_status st ON st.id=i.status_id
+                LEFT JOIN users c ON c.id=i.converted_client_id
                 WHERE i.is_deleted=FALSE
                 ORDER BY i.created_at DESC LIMIT 6", new());
         }
@@ -110,7 +120,7 @@ public class DashboardController : Controller
                 SELECT p.amount, p.payment_mode, p.payment_date,
                        c.client_ref, c.company_name
                 FROM payments p
-                JOIN clients c ON c.id=p.client_id
+                JOIN users c ON c.id=p.client_id
                 WHERE p.is_deleted=FALSE
                 ORDER BY p.created_at DESC LIMIT 5", new());
         }

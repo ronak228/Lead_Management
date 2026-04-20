@@ -1,15 +1,10 @@
 @model Client
 @{
     ViewData["Title"] = "Client Details";
-    var payments = ViewBag.Payments as List<Dictionary<string, object?>> ?? new();
-    var ps = Model.PaymentStatus;
-    var psStyle = ps == "Paid" ? "background:#d1fae5;color:#065f46;" :
-                  ps == "Partial" ? "background:#fef3c7;color:#92400e;" :
-                  Model.TotalAmount > 0 ? "background:#fee2e2;color:#991b1b;" : "background:#f3f4f6;color:#6b7280;";
     var role = Context.Session.GetString("UserRole");
+    var userId = Context.Session.GetInt32("UserId");
     bool isStaff = role == "Admin" || role == "Employee";
-    var setupLink = TempData["SetupLink"] as string;
-    bool setupPending = ViewBag.SetupPending == true;
+    bool isOwnProfile = role == "Client" && userId == Model.Id;
 }
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -17,63 +12,20 @@
         <h4>@Model.CompanyName
             <span style="font-family:monospace;font-size:.75rem;color:var(--brand);font-weight:700;margin-left:8px;">@Model.ClientRef</span>
         </h4>
-        <p>Full profile &amp; payment history</p>
+        <p>Full client profile</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@Model.Id"
-           class="btn btn-outline-primary px-3" style="font-size:.84rem;">
-            <i class="bi bi-cash-coin me-1"></i>Add Payment
-        </a>
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-brand px-3" style="font-size:.84rem;">
-            <i class="bi bi-pencil me-1"></i>Edit
-        </a>
+        @if (isOwnProfile)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-brand px-4" style="font-size:.84rem;">
+                <i class="bi bi-pencil me-1"></i>Edit Profile
+            </a>
+        }
         <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
             <i class="bi bi-arrow-left me-1"></i>Back
         </a>
     </div>
 </div>
-
-@* ── Setup link banner — shown to staff immediately after creation or when setup is still pending ── *@
-@if (isStaff && !string.IsNullOrEmpty(setupLink))
-{
-    <div class="alert alert-success d-flex flex-column flex-md-row align-items-md-center gap-3 mb-4" style="border-radius:10px;border:1px solid #86efac;">
-        <div class="flex-grow-1">
-            <div style="font-weight:600;font-size:.88rem;margin-bottom:4px;"><i class="bi bi-link-45deg me-1"></i>Client Setup Link Generated</div>
-            <div class="text-muted" style="font-size:.80rem;">Share this link with your client. They will use it to set their own password and activate their account (valid for 7 days).</div>
-            <div class="mt-2 input-group" style="max-width:600px;">
-                <input type="text" id="setupLinkInput" class="form-control form-control-sm font-monospace"
-                       value="@setupLink" readonly style="font-size:.75rem;" />
-                <button class="btn btn-sm btn-outline-success" type="button" onclick="copySetupLink()" title="Copy link">
-                    <i class="bi bi-clipboard" id="copyIcon"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-    <script>
-    function copySetupLink() {
-        var input = document.getElementById('setupLinkInput');
-        navigator.clipboard.writeText(input.value).then(function() {
-            var icon = document.getElementById('copyIcon');
-            icon.className = 'bi bi-clipboard-check';
-            setTimeout(function() { icon.className = 'bi bi-clipboard'; }, 2000);
-        });
-    }
-    </script>
-}
-else if (isStaff && setupPending)
-{
-    <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4" style="border-radius:10px;">
-        <div>
-            <div style="font-weight:600;font-size:.88rem;"><i class="bi bi-hourglass-split me-1"></i>Account Activation Pending</div>
-            <div class="text-muted" style="font-size:.80rem;">This client has not yet set their password. You can generate a new setup link if the previous one expired.</div>
-        </div>
-        <form asp-action="RegenerateSetupLink" asp-route-id="@Model.Id" method="post">
-            <button type="submit" class="btn btn-sm btn-warning" style="font-size:.82rem;font-weight:600;">
-                <i class="bi bi-arrow-clockwise me-1"></i>Regenerate Link
-            </button>
-        </form>
-    </div>
-}
 
 <div class="row g-4">
     <!-- Main details -->
@@ -101,9 +53,17 @@ else if (isStaff && setupPending)
                     @{ Field("Contact Person", Model.ContactPerson); }
                     @{ Field("Phone",          Model.Phone); }
                     @{ Field("Email",          Model.Email); }
+                    @if (isStaff && !string.IsNullOrWhiteSpace(Model.Email))
+                    {
+                        <div class="col-sm-6">
+                            <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">Login Account</div>
+                            <div style="font-size:.88rem;font-weight:500;">
+                                <span class="badge text-bg-success" style="font-size:.77rem;"><i class="bi bi-person-check me-1"></i>Active — @Model.Email</span>
+                            </div>
+                        </div>
+                    }
                     @{ Field("City",           Model.CityName); }
                     @{ Field("Module",         Model.ModuleName); }
-                    @{ Field("Room Size",      Model.RoomSize); }
                     @{ Field("Address",        Model.Address); }
                     @{ Field("Added By",       Model.CreatedByName); }
                     @{ Field("Created",        Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
@@ -118,112 +78,10 @@ else if (isStaff && setupPending)
                 }
             </div>
         </div>
-
-        <!-- Payment History -->
-        <div class="card">
-            <div class="card-header-clean">
-                <h6><i class="bi bi-cash-stack me-2" style="color:var(--brand);"></i>
-                    Payment History
-                    <span class="text-muted fw-normal" style="font-size:.76rem;">(@payments.Count)</span>
-                </h6>
-                <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@Model.Id"
-                   style="font-size:.78rem;color:var(--brand);text-decoration:none;font-weight:500;">
-                    <i class="bi bi-plus me-1"></i>Add Payment
-                </a>
-            </div>
-            <div class="card-body p-0">
-                @if (payments.Count == 0)
-                {
-                    <div class="text-center py-4 text-muted" style="font-size:.84rem;">
-                        <i class="bi bi-inbox d-block mb-2" style="font-size:1.8rem;opacity:.25;"></i>
-                        No payments recorded yet.
-                    </div>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-clean mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Mode</th>
-                                    <th class="table-mobile-hide">Note</th>
-                                    <th class="table-mobile-hide">Recorded By</th>
-                                    <th class="text-end">Proof</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var p in payments)
-                                {
-                                    <tr>
-                                        <td style="font-size:.8rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM yyyy")</td>
-                                        <td class="fw-500" style="color:#16a34a;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
-                                        <td style="font-size:.8rem;">
-                                            <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">
-                                                @p["payment_mode"]
-                                            </span>
-                                        </td>
-                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p["note"]?.ToString() ?? "—")</td>
-                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p["created_by_name"]?.ToString() ?? "—")</td>
-                                        <td class="text-end">
-                                            @if (p["proof_file"] is not null and not DBNull && !string.IsNullOrEmpty(p["proof_file"]?.ToString()))
-                                            {
-                                                <a href="/uploads/payments/@p["proof_file"]" target="_blank"
-                                                   class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View Proof">
-                                                    <i class="bi bi-paperclip"></i>
-                                                </a>
-                                            }
-                                            else { <span class="text-muted">—</span> }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </div>
     </div>
 
     <!-- Side card -->
     <div class="col-lg-4">
-        <!-- Payment Summary -->
-        @if (Model.TotalAmount > 0)
-        {
-            <div class="card mb-3">
-                <div class="card-header-clean">
-                    <h6><i class="bi bi-pie-chart me-2" style="color:var(--brand);"></i>Payment Summary</h6>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span style="font-size:.83rem;">Contract Amount</span>
-                        <strong style="font-size:.9rem;">₹@Model.TotalAmount.ToString("N0")</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span style="font-size:.83rem;">Total Paid</span>
-                        <strong style="font-size:.9rem;color:#16a34a;">₹@Model.TotalPaid.ToString("N0")</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span style="font-size:.83rem;">Remaining</span>
-                        <strong style="font-size:.9rem;color:#dc2626;">₹@Model.TotalRemaining.ToString("N0")</strong>
-                    </div>
-                    @{
-                        var pct = Model.TotalAmount > 0 ? (double)Model.TotalPaid / (double)Model.TotalAmount * 100 : 0;
-                    }
-                    <div class="progress" style="height:8px;border-radius:20px;">
-                        <div class="progress-bar" role="progressbar"
-                             style="width:@pct.ToString("F0")%;background:var(--brand);"
-                             aria-valuenow="@pct.ToString("F0")" aria-valuemin="0" aria-valuemax="100">
-                        </div>
-                    </div>
-                    <div class="text-center mt-2">
-                        <span style="@psStyle font-size:.76rem;padding:3px 12px;border-radius:20px;font-weight:700;">@ps</span>
-                    </div>
-                </div>
-            </div>
-        }
-
         <div class="card">
             <div class="card-body p-4">
                 <div class="text-center mb-3">
@@ -236,26 +94,80 @@ else if (isStaff && setupPending)
                     @if (!string.IsNullOrWhiteSpace(Model.Email))
                     {<div style="font-size:.78rem;color:var(--text-muted);">@Model.Email</div>}
                 </div>
-                <hr style="border-color:var(--border);" />
-                <div class="d-grid gap-2">
-                    <form asp-action="Toggle" asp-route-id="@Model.Id" method="post">
-                        <button type="submit"
-                                class="btn w-100 @(Model.IsActive ? "btn-outline-warning" : "btn-outline-success")"
-                                style="font-size:.83rem;">
-                            <i class="bi @(Model.IsActive ? "bi-person-dash" : "bi-person-check") me-1"></i>
-                            @(Model.IsActive ? "Deactivate Client" : "Activate Client")
-                        </button>
-                    </form>
-                    @if (SessionHelper.IsAdmin(Context.Session))
-                    {
-                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
-                              onsubmit="return confirm('Remove this client?')">
-                            <button type="submit" class="btn btn-outline-danger w-100" style="font-size:.83rem;">
-                                <i class="bi bi-trash3 me-1"></i>Remove Client
-                            </button>
-                        </form>
-                    }
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    var payments = ViewBag.Payments as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
+}
+
+<div class="row g-4 mt-2">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-cash-stack me-2" style="color:var(--brand);"></i>Payment Summary</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted" style="font-size:.82rem;">Contract Total</span>
+                    <strong>₹@Model.TotalAmount.ToString("N0")</strong>
                 </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted" style="font-size:.82rem;">Paid So Far</span>
+                    <strong class="text-success">₹@Model.TotalPaid.ToString("N0")</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted" style="font-size:.82rem;">Remaining</span>
+                    <strong class="text-danger">₹@Model.TotalRemaining.ToString("N0")</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size:.82rem;">Payment Status</span>
+                    <span class="badge text-bg-secondary" style="font-size:.78rem;">@Model.PaymentStatus</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-receipt-cutoff me-2" style="color:var(--brand);"></i>Transaction History</h6>
+            </div>
+            <div class="card-body p-0">
+                @if (!payments.Any())
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;opacity:.25;"></i>
+                        <span style="font-size:.82rem;">No payments recorded yet.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-clean mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Mode</th>
+                                    <th class="table-mobile-hide">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var payment in payments)
+                                {
+                                    <tr>
+                                        <td style="font-size:.8rem;">@Convert.ToDateTime(payment["payment_date"]).ToString("dd MMM yyyy")</td>
+                                        <td style="font-weight:700;color:#16a34a;">₹@Convert.ToDecimal(payment["amount"]).ToString("N0")</td>
+                                        <td style="font-size:.83rem;">@payment["payment_mode"]</td>
+                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(payment["note"]?.ToString() ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
         </div>
     </div>

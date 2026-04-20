@@ -143,29 +143,33 @@ public class ConfigurationController : Controller
         return RedirectToAction("Index", new { tab });
     }
 
-    // ── DELETE ───────────────────────────────────────────────
+    // ── DELETE (soft deactivate) ────────────────────────────────
     [HttpPost]
     public async Task<IActionResult> Delete(string tab, int id)
     {
         var table = TabToTable(tab);
         if (table == null) return BadRequest();
 
+        // Soft-deactivate instead of hard-delete to preserve FK integrity.
+        // Deactivated items are hidden from creation dropdowns but existing linked records remain intact.
         await _db.ExecuteNonQueryAsync(
-            $"DELETE FROM {table} WHERE id=@id",
+            $"UPDATE {table} SET is_active=FALSE WHERE id=@id",
             new() { ["@id"] = id });
 
-        TempData["Success"] = "Deleted successfully.";
+        TempData["Success"] = "Item deactivated successfully.";
         return RedirectToAction("Index", new { tab });
     }
 
-    // ── Helper: map tab name → table name ───────────────────
-    private static string? TabToTable(string tab) => tab?.ToLower() switch
+    // ── Helper: map tab name → table name (whitelist Dictionary — never interpolate user input) ──
+    private static readonly Dictionary<string, string> TableMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        "status"   => "cfg_status",
-        "module"   => "cfg_module",
-        "product"  => "cfg_product",
-        "category" => "cfg_category",
-        "city"     => "cfg_city",
-        _          => null
+        ["status"]   = "cfg_status",
+        ["module"]   = "cfg_module",
+        ["product"]  = "cfg_product",
+        ["category"] = "cfg_category",
+        ["city"]     = "cfg_city"
     };
+
+    private static string? TabToTable(string? tab) =>
+        tab != null && TableMap.TryGetValue(tab, out var t) ? t : null;
 }

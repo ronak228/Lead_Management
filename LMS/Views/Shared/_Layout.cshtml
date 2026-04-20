@@ -20,6 +20,14 @@
 }
 @if (isLoggedIn)
 {
+    @if (TempData["ClientDeactivated"] as bool? == true)
+    {
+        <div class="alert alert-warning alert-dismissible fade show m-3" role="alert" style="border-left: 4px solid #D97706;">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Account Deactivated</strong> — Your client account has been deactivated. Please contact the system administrator to reactivate your account.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 <div class="d-flex" id="wrapper">
   <nav id="sidebar">
     <div class="sidebar-brand">
@@ -93,12 +101,49 @@
           <span class="u-role @(sessionRole=="Admin"?"admin":"")">@sessionRole</span>
         </div>
       </div>
-      <a asp-controller="Auth" asp-action="Logout" class="btn-logout">
-        <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>
-      </a>
+      <form asp-controller="Auth" asp-action="Logout" method="post" class="btn-logout-form">
+        <button type="submit" class="btn-logout">
+          <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>
+        </button>
+      </form>
     </div>
   </nav>
   <div id="sidebarOverlay"></div>
+  <!-- Bottom navigation bar (mobile only) -->
+  <nav id="mobileBottomNav">
+    <a asp-controller="Dashboard" asp-action="Index" class="@(ctrl=="Dashboard"?"active":"")">
+      <i class="bi bi-grid-1x2"></i><span>Home</span>
+    </a>
+    @if (sessionRole == "Admin" || sessionRole == "Employee")
+    {
+      <a asp-controller="Inquiry" asp-action="Index" class="@(ctrl=="Inquiry"?"active":"")">
+        <i class="bi bi-search"></i><span>Inquiries</span>
+      </a>
+      <a asp-controller="Client" asp-action="Index" class="@(ctrl=="Client"?"active":"")">
+        <i class="bi bi-people"></i><span>Clients</span>
+      </a>
+      <a asp-controller="Payment" asp-action="Index" class="@(ctrl=="Payment"?"active":"")">
+        <i class="bi bi-cash-coin"></i><span>Payments</span>
+      </a>
+    }
+    @if (sessionRole == "Client")
+    {
+      <a asp-controller="Inquiry" asp-action="Index" class="@(ctrl=="Inquiry"?"active":"")">
+        <i class="bi bi-search"></i><span>Inquiries</span>
+      </a>
+      <a asp-controller="Client" asp-action="Index" class="@(ctrl=="Client"?"active":"")">
+        <i class="bi bi-person-badge"></i><span>Profile</span>
+      </a>
+      <a asp-controller="Payment" asp-action="Index" class="@(ctrl=="Payment"?"active":"")">
+        <i class="bi bi-cash-coin"></i><span>Payments</span>
+      </a>
+    }
+    <form asp-controller="Auth" asp-action="Logout" method="post" style="display:contents;">
+      <button type="submit" class="nav-logout-btn" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;color:inherit;">
+        <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+      </button>
+    </form>
+  </nav>
   <div id="page-content">
     <nav class="top-navbar">
       <button class="btn-toggle" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
