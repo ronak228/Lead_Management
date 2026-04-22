@@ -15,19 +15,33 @@
 @if (isClient)
 {
     <!-- Client view -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-indigo">
+    <div class="row g-2 mb-3 mb-md-4">
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-indigo h-100">
                 <div class="stat-icon"><i class="bi bi-building"></i></div>
-                <div class="stat-value">@(ViewBag.CompanyName ?? "—")</div>
+                <div class="stat-value" style="font-size:1.1rem;">@(ViewBag.CompanyName ?? "—")</div>
                 <div class="stat-label">@(ViewBag.ClientRef ?? "")</div>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-green">
-                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-green h-100">
+                <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
                 <div class="stat-value">₹@(((decimal?)ViewBag.TotalPaid ?? 0).ToString("N0"))</div>
                 <div class="stat-label">Amount Paid</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-blue h-100">
+                <div class="stat-icon"><i class="bi bi-search"></i></div>
+                <div class="stat-value">@(ViewBag.ClientInquiries ?? 0)</div>
+                <div class="stat-label">Total Inquiries</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-teal h-100">
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-value">@(ViewBag.PaymentCount ?? 0)</div>
+                <div class="stat-label">Payments</div>
             </div>
         </div>
     </div>
@@ -58,80 +72,120 @@
             </div>
         </div>
     }
+
+    @if (ViewBag.RecentInquiries is List<Dictionary<string, object?>> recentInq && recentInq.Any())
+    {
+        <div class="card">
+            <div class="card-header-clean">
+                <h6><i class="bi bi-search me-2" style="color:var(--brand);"></i>My Recent Inquiries</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-clean mb-0">
+                        <thead><tr><th>Hotel Name</th><th>Status</th><th class="table-mobile-hide">Date</th></tr></thead>
+                        <tbody>
+                            @foreach (var inq in recentInq)
+                            {
+                                var statusName = inq["status"]?.ToString() ?? "Unknown";
+                                var statusColor = statusName.ToLower() switch 
+                                {
+                                    "received" => "#3b82f6",
+                                    "in progress" => "#f59e0b",
+                                    "completed" => "#10b981",
+                                    "closed" => "#6b7280",
+                                    _ => "#6b7280"
+                                };
+                                <tr>
+                                    <td style="font-size:.9rem;"><strong>@(inq["hotel_name"]?.ToString() ?? "—")</strong></td>
+                                    <td style="font-size:.8rem;"><span style="background-color:@(statusColor)22;color:@statusColor;padding:4px 8px;border-radius:4px;font-weight:600;">@statusName</span></td>
+                                    <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@Convert.ToDateTime(inq["created_at"]).ToString("dd MMM yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
 }
 else
 {
-    <!-- Admin / User view -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-indigo">
+    <!-- Admin / Employee view -->
+    <div class="row g-2 mb-3 mb-md-4">
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-indigo h-100">
                 <div class="stat-icon"><i class="bi bi-search"></i></div>
                 <div class="stat-value">@(ViewBag.TotalInquiries ?? 0)</div>
                 <div class="stat-label">Total Inquiries</div>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-green">
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-green h-100">
                 <div class="stat-icon"><i class="bi bi-people"></i></div>
                 <div class="stat-value">@(ViewBag.TotalClients ?? 0)</div>
                 <div class="stat-label">Total Clients</div>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-amber">
-                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
-                <div class="stat-value">₹@(((decimal?)ViewBag.TotalIncome ?? 0).ToString("N0"))</div>
-                <div class="stat-label">Total Income</div>
-            </div>
-        </div>
-        <div class="col-6 col-xl-3">
-            <div class="card stat-card si-rose">
-                <div class="stat-icon"><i class="bi bi-receipt"></i></div>
-                <div class="stat-value">₹@(((decimal?)ViewBag.TotalExpenses ?? 0).ToString("N0"))</div>
-                <div class="stat-label">Total Expenses</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Secondary stats -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card si-indigo">
+        <div class="col-6 col-md-6 col-lg-3">
+            <div class="card stat-card si-cyan h-100">
                 <div class="stat-icon"><i class="bi bi-bell"></i></div>
                 <div class="stat-value">@(ViewBag.FollowupToday ?? 0)</div>
                 <div class="stat-label">Follow-ups Today</div>
             </div>
         </div>
+        @if (userRole == "Admin")
+        {
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card stat-card si-amber h-100">
+                    <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                    <div class="stat-value">₹@(((decimal?)ViewBag.TotalIncome ?? 0).ToString("N0"))</div>
+                    <div class="stat-label">Total Income</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-6 col-lg-3">
+                <div class="card stat-card si-rose h-100">
+                    <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+                    <div class="stat-value">₹@(((decimal?)ViewBag.TotalExpenses ?? 0).ToString("N0"))</div>
+                    <div class="stat-label">Total Expenses</div>
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Quick links -->
     @if (userRole == "Admin")
     {
-        <div class="row g-3 mb-4">
-            <div class="col-md-4 col-sm-6">
-                <a asp-controller="Payment" asp-action="Create" class="card text-decoration-none quick-link-card">
-                    <div class="card-body d-flex align-items-center gap-3 py-3">
-                        <div class="stat-icon si-green" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-cash-coin" style="font-size:.9rem;"></i></div>
-                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Add Payment</div></div>
-                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+        <div class="row g-2 mb-4">
+            <div class="col-6 col-md-4 col-lg-4">
+                <a asp-controller="Payment" asp-action="Create" class="quick-link-card">
+                    <div class="card-body">
+                        <div class="stat-icon si-green"><i class="bi bi-cash-coin"></i></div>
+                        <div class="quick-link-card-text">
+                            <div class="quick-link-card-title">Add Payment</div>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
                     </div>
                 </a>
             </div>
-            <div class="col-md-4 col-sm-6">
-                <a asp-controller="Expense" asp-action="Create" class="card text-decoration-none quick-link-card">
-                    <div class="card-body d-flex align-items-center gap-3 py-3">
-                        <div class="stat-icon si-rose" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-receipt" style="font-size:.9rem;"></i></div>
-                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Add Expense</div></div>
-                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+            <div class="col-6 col-md-4 col-lg-4">
+                <a asp-controller="Expense" asp-action="Create" class="quick-link-card">
+                    <div class="card-body">
+                        <div class="stat-icon si-rose"><i class="bi bi-receipt"></i></div>
+                        <div class="quick-link-card-text">
+                            <div class="quick-link-card-title">Add Expense</div>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
                     </div>
                 </a>
             </div>
-            <div class="col-md-4 col-sm-6">
-                <a asp-controller="Configuration" asp-action="Index" class="card text-decoration-none quick-link-card">
-                    <div class="card-body d-flex align-items-center gap-3 py-3">
-                        <div class="stat-icon si-amber" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"><i class="bi bi-sliders" style="font-size:.9rem;"></i></div>
-                        <div><div style="font-weight:600;font-size:.86rem;color:var(--text-main);">Configuration</div></div>
-                        <i class="bi bi-chevron-right ms-auto" style="color:var(--text-muted);font-size:.8rem;"></i>
+            <div class="col-6 col-md-4 col-lg-4">
+                <a asp-controller="Configuration" asp-action="Index" class="quick-link-card">
+                    <div class="card-body">
+                        <div class="stat-icon si-amber"><i class="bi bi-sliders"></i></div>
+                        <div class="quick-link-card-text">
+                            <div class="quick-link-card-title">Configuration</div>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
                     </div>
                 </a>
             </div>
@@ -149,18 +203,18 @@ else
                 <div class="card-body p-0">
                     @if (!recent.Any())
                     {
-                        <div class="text-center py-5 text-muted">
-                            <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;opacity:.25;"></i>
-                            <span style="font-size:.82rem;">No inquiries yet. <a asp-controller="Inquiry" asp-action="Create" style="color:var(--brand);">Add one →</a></span>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox d-block mb-2" style="font-size:1.8rem;opacity:.25;"></i>
+                            <span style="font-size:.82rem;">No inquiries yet. <a asp-controller="Inquiry" asp-action="Create" style="color:var(--brand);">Create one →</a></span>
                         </div>
                     }
                     else
                     {
                         <div class="table-responsive">
-                            <table class="table table-clean mb-0">
+                            <table class="table table-clean mb-0" style="font-size:.85rem;">
                                 <thead><tr>
-                                    <th>Hotel</th><th>Client</th><th class="table-mobile-hide">Ref</th><th>Status</th>
-                                    <th class="table-mobile-hide">Follow-up</th><th class="table-mobile-hide">Date</th>
+                                    <th style="font-weight:600;">Hotel</th><th style="font-weight:600;">Client</th><th class="table-mobile-hide" style="font-weight:600;">Ref</th><th style="font-weight:600;">Status</th>
+                                    <th class="table-mobile-hide" style="font-weight:600;">Follow-up</th><th class="table-mobile-hide" style="font-weight:600;">Date</th>
                                 </tr></thead>
                                 <tbody>
                                     @foreach (var r in recent)
@@ -168,25 +222,18 @@ else
                                         <tr>
                                             <td class="fw-500">@r["hotel_name"]</td>
                                             <td style="font-size:.82rem;">@r["client_name"]</td>
-                                            <td class="table-mobile-hide" style="font-size:.72rem;">
-                                                @if (r["client_ref"] is not null and not DBNull)
-                                                {
-                                                    <span style="font-family:monospace;color:var(--brand);font-weight:600;">@r["client_ref"]</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">—</span>
-                                                }
+                                            <td class="table-mobile-hide" style="font-size:.72rem;color:var(--brand);font-weight:600;font-family:monospace;">
+                                                @(r["client_ref"] is not null and not DBNull ? r["client_ref"] : "—")
                                             </td>
                                             <td>
                                                 @if (r["status_name"] != null)
-                                                {<span style="background:#fef9ec;color:#92400e;font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@r["status_name"]</span>}
-                                                else {<span class="text-muted">—</span>}
+                                                {<span style="background:#fef9ec;color:#92400e;font-size:.73rem;padding:3px 8px;border-radius:4px;font-weight:600;">@r["status_name"]</span>}
+                                                else {<span class="text-muted" style="font-size:.8rem;">—</span>}
                                             </td>
                                             <td class="table-mobile-hide text-muted" style="font-size:.75rem;">
                                                 @(r["followup_date"] is not null and not DBNull ? Convert.ToDateTime(r["followup_date"]).ToString("dd MMM") : "—")
                                             </td>
-                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(r["created_at"]).ToString("dd MMM yy")</td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(r["created_at"]).ToString("dd MMM")</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -208,22 +255,22 @@ else
                     @if (!recentPayments.Any())
                     {
                         <div class="text-center py-4 text-muted" style="font-size:.82rem;">
-                            <i class="bi bi-cash-stack d-block mb-2" style="font-size:1.8rem;opacity:.25;"></i>
-                            No payments recorded yet.
+                            <i class="bi bi-inbox d-block mb-2" style="font-size:1.8rem;opacity:.25;"></i>
+                            No payments yet.
                         </div>
                     }
                     else
                     {
                         <div class="table-responsive">
-                            <table class="table table-clean mb-0">
-                                <thead><tr><th>Company</th><th>Amount</th><th class="table-mobile-hide">Date</th></tr></thead>
+                            <table class="table table-clean mb-0" style="font-size:.85rem;">
+                                <thead><tr><th style="font-weight:600;">Company</th><th style="font-weight:600;">Amount</th><th class="table-mobile-hide" style="font-weight:600;">Date</th></tr></thead>
                                 <tbody>
                                     @foreach (var p in recentPayments)
                                     {
                                         <tr>
-                                            <td style="font-size:.8rem;">
+                                            <td style="font-size:.82rem;">
                                                 <div class="fw-500">@p["company_name"]</div>
-                                                <div style="font-size:.72rem;color:var(--brand);font-family:monospace;">@p["client_ref"]</div>
+                                                <div style="font-size:.71rem;color:var(--brand);font-weight:600;font-family:monospace;">@p["client_ref"]</div>
                                             </td>
                                             <td style="font-weight:700;color:#16a34a;font-size:.88rem;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
                                             <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM")</td>
@@ -239,7 +286,21 @@ else
     </div>
 }
 
+<!-- Mobile-optimized responsive styles -->
 <style>
-.quick-link-card { transition: box-shadow .15s, transform .15s; }
-.quick-link-card:hover { box-shadow: 0 4px 16px rgba(79,70,229,.12); transform: translateY(-1px); }
+@@media (max-width: 767.98px) {
+    .quick-link-card { display: block !important; }
+    .quick-link-card .card-body { padding: 12px 14px !important; gap: 10px; }
+    .quick-link-card .stat-icon { width: 36px; height: 36px; }
+    .quick-link-card-title { font-size: .83rem; }
+}
+
+@@media (min-width: 768px) and (max-width: 991.98px) {
+    .quick-link-card { margin-bottom: 10px; }
+}
+
+@@media (min-width: 992px) {
+    .quick-link-card { margin-bottom: 0; }
+    .row.g-2 { --bs-gutter-x: 1rem; }
+}
 </style>

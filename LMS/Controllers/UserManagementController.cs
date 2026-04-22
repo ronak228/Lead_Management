@@ -10,6 +10,7 @@ namespace LeadManagementSystem.Controllers;
 public class UserManagementController : Controller
 {
     private readonly DbHelper _db;
+    private readonly ILogger<UserManagementController> _logger;
 
     // Only these roles may be assigned via the admin panel
     private static readonly string[] AllowedRoles =
@@ -19,7 +20,11 @@ public class UserManagementController : Controller
         SessionHelper.RoleClient
     };
 
-    public UserManagementController(DbHelper db) => _db = db;
+    public UserManagementController(DbHelper db, ILogger<UserManagementController> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     // ── LIST ─────────────────────────────────────────────────
     public async Task<IActionResult> Index(string? search, string? filterRole, int page = 1)

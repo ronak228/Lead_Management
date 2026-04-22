@@ -2,6 +2,7 @@ using LeadManagementSystem.Data;
 using LeadManagementSystem.Filters;
 using LeadManagementSystem.Helpers;
 using LeadManagementSystem.Models;
+using LeadManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using ClosedXML.Excel;
 
@@ -12,8 +13,17 @@ namespace LeadManagementSystem.Controllers;
 public class InquiryController : Controller
 {
     private readonly DbHelper _db;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<InquiryController> _logger;
+    private readonly ClientService _clientService;
 
-    public InquiryController(DbHelper db) => _db = db;
+    public InquiryController(DbHelper db, IEmailService emailService, ILogger<InquiryController> logger, ClientService clientService)
+    {
+        _db = db;
+        _emailService = emailService;
+        _logger = logger;
+        _clientService = clientService;
+    }
 
     // ── helpers ──────────────────────────────────────────────
     private async Task<List<ConfigItem>> LoadActive(string table)
@@ -47,7 +57,7 @@ public class InquiryController : Controller
         // Client: scope to their own inquiries
         if (role == SessionHelper.RoleClient && userId.HasValue)
         {
-            var myClient = await GetClientByUserId(userId.Value);
+            var myClient = await _clientService.GetByUserIdAsync(userId.Value);
             if (myClient != null)
             {
                 whereClause += " AND (i.client_number=@cph OR i.created_by=@cuid)";
@@ -63,7 +73,7 @@ public class InquiryController : Controller
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            whereClause += " AND (LOWER(i.hotel_name) LIKE @s OR LOWER(i.client_name) LIKE @s OR i.client_number LIKE @s)";
+            whereClause += " AND (LOWER(i.hotel_name) LIKE @s OR LOWER(i.client_name) LIKE @s OR LOWER(i.client_number) LIKE @s)";
             p["@s"] = $"%{search.Trim().ToLower()}%";
         }
         if (filterStatus.HasValue) { whereClause += " AND i.status_id=@st";  p["@st"] = filterStatus.Value; }
@@ -139,7 +149,7 @@ public class InquiryController : Controller
         // Pre-fill client's own details and lock their client_id
         if (userId.HasValue)
         {
-            var myClient = await GetClientByUserId(userId.Value);
+            var myClient = await _clientService.GetByUserIdAsync(userId.Value);
             if (myClient != null)
             {
                 vm.Inquiry.ClientId     = myClient.Id;
@@ -159,7 +169,7 @@ public class InquiryController : Controller
     public async Task<IActionResult> Create(InquiryFormViewModel vm)
     {
         var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
-        var myClient = await GetClientByUserId(userId.GetValueOrDefault());
+        var myClient = await _clientService.GetByUserIdAsync(userId.GetValueOrDefault());
 
         // Force client's own data to prevent identity spoofing
         if (myClient != null)
@@ -358,7 +368,7 @@ public class InquiryController : Controller
 
         var p = new Dictionary<string, object?>();
         // Admin and Employee both export all inquiries
-        if (!string.IsNullOrWhiteSpace(search))   { sql += " AND (LOWER(i.hotel_name) LIKE @s OR LOWER(i.client_name) LIKE @s OR i.client_number LIKE @s)"; p["@s"] = $"%{search.ToLower()}%"; }
+        if (!string.IsNullOrWhiteSpace(search))   { sql += " AND (LOWER(i.hotel_name) LIKE @s OR LOWER(i.client_name) LIKE @s OR LOWER(i.client_number) LIKE @s)"; p["@s"] = $"%{search.ToLower()}%"; }
         if (filterStatus.HasValue) { sql += " AND i.status_id=@st"; p["@st"] = filterStatus.Value; }
         if (filterModule.HasValue) { sql += " AND i.module_id=@mo"; p["@mo"] = filterModule.Value; }
         if (!string.IsNullOrWhiteSpace(filterCity)) { sql += " AND LOWER(ci.name) LIKE @cy"; p["@cy"] = $"%{filterCity.ToLower()}%"; }
@@ -424,6 +434,39 @@ public class InquiryController : Controller
             await _db.ExecuteNonQueryAsync(
                 "UPDATE inquiries SET status_id=@st, updated_by=@ub, updated_at=NOW() WHERE id=@id",
                 new() { ["@st"] = newStatusId, ["@ub"] = (object?)userId ?? DBNull.Value, ["@id"] = id });
+
+            // Send status update email notification (#9)
+            try
+            {
+                var newStatusName = inq.StatusName switch
+                {
+                    "Received" => "In Progress",
+                    "In Progress" => "Completed",
+                    _ => "Unknown"
+                };
+
+                // Get client email if this is linked to a client
+                if (inq.ClientId.HasValue)
+                {
+                    var clientEmail = await _db.ExecuteScalarAsync(
+                        "SELECT u.email FROM users u WHERE u.id = (SELECT user_id FROM clients WHERE id=@cid) LIMIT 1",
+                        new() { ["@cid"] = inq.ClientId.Value });
+                    
+                    if (clientEmail != null)
+                    {
+                        await _emailService.SendStatusUpdateAsync(
+                            clientEmail.ToString() ?? "",
+                            inq.HotelName,
+                            newStatusName);
+                        _logger.LogInformation("Status update email sent for inquiry {InquiryId} to status {Status}", id, newStatusName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send status update email for inquiry {InquiryId}", id);
+                // Don't throw - email failure shouldn't block the status update
+            }
         }
 
         return RedirectToAction("Details", new { id });
@@ -444,26 +487,11 @@ public class InquiryController : Controller
         var role   = HttpContext.Session.GetString(SessionHelper.UserRole);
         var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
         if (role != SessionHelper.RoleClient || !userId.HasValue) return null;
-        var client = await GetClientByUserId(userId.Value);
+        var client = await _clientService.GetByUserIdAsync(userId.Value);
         return client?.Phone;
     }
 
-    private async Task<Models.Client?> GetClientByUserId(int userId)
-    {
-        // Users ARE clients now, so just look up the user directly
-        var rows = await _db.QueryAsync(
-            "SELECT id, client_ref, contact_person, phone, company_name FROM users WHERE id=@uid AND is_deleted=FALSE",
-            new() { ["@uid"] = userId });
-        if (rows.Count == 0) return null;
-        return new Models.Client
-        {
-            Id            = Convert.ToInt32(rows[0]["id"]),
-            ClientRef     = rows[0]["client_ref"]?.ToString() ?? "",
-            ContactPerson = rows[0]["contact_person"]?.ToString() ?? "",
-            Phone         = rows[0]["phone"]?.ToString() ?? "",
-            CompanyName   = rows[0]["company_name"]?.ToString() ?? ""
-        };
-    }
+    private async Task<Models.Client?> GetClientByUserIdAsync(int userId) => await _clientService.GetByUserIdAsync(userId);
 
     private async Task ReloadDropdowns(InquiryFormViewModel vm)
     {
@@ -548,12 +576,6 @@ public class InquiryController : Controller
         if (digits.Length > 10 && digits.StartsWith("91")) digits = digits[2..];
         if (digits.Length > 10 && digits.StartsWith("0"))  digits = digits[1..];
         return digits.Length >= 10 ? digits : phone.Trim();
-    }
-
-    private async Task<string> NextClientRef()
-    {
-        var val = await _db.ExecuteScalarAsync("SELECT nextval('client_ref_seq')", new());
-        return $"LMS-{Convert.ToInt64(val):D4}";
     }
 
     // ── CONVERT TO CLIENT ────────────────────────────────────

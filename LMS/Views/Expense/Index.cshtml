@@ -35,7 +35,11 @@
                     <option value="">All Categories</option>
                     @foreach (var c in Model.Categories)
                     {
-                        <option value="@c.Id" selected="@(Model.CategoryId == c.Id)">@c.Name</option>
+                        if (Model.CategoryId == c.Id) {
+                            <option value="@c.Id" selected>@c.Name</option>
+                        } else {
+                            <option value="@c.Id">@c.Name</option>
+                        }
                     }
                 </select>
             </div>

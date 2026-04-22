@@ -11,11 +11,13 @@ public class AuthController : Controller
 {
     private readonly DbHelper _db;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(DbHelper db, IEmailService emailService)
+    public AuthController(DbHelper db, IEmailService emailService, ILogger<AuthController> logger)
     {
         _db = db;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // ─── LOGIN ───────────────────────────────────────────
@@ -59,18 +61,6 @@ public class AuthController : Controller
                 : "Your account has been deactivated. Please contact support.";
             RateLimitAttribute.RecordFailedAttempt(HttpContext);
             return View(model);
-        }
-
-        // For clients, check is_active status
-        if (row["role"]?.ToString() == SessionHelper.RoleClient)
-        {
-            // Client account active status is now in users table
-            if (!(bool)(row["is_active"] ?? true))
-            {
-                model.ErrorMessage = "Your account has been deactivated. Please contact the administrator to reactivate it.";
-                RateLimitAttribute.RecordFailedAttempt(HttpContext);
-                return View(model);
-            }
         }
 
         var storedHash = row["password"]?.ToString() ?? "";

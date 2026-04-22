@@ -33,8 +33,16 @@
                 <label class="form-label mb-1" style="font-size:.76rem;">Status</label>
                 <select name="filterStatus" class="form-select">
                     <option value="">All</option>
-                    <option value="active"   selected="@(Model.FilterStatus=="active")">Active</option>
-                    <option value="inactive" selected="@(Model.FilterStatus=="inactive")">Inactive</option>
+                    @if (Model.FilterStatus == "active") {
+                        <option value="active" selected>Active</option>
+                    } else {
+                        <option value="active">Active</option>
+                    }
+                    @if (Model.FilterStatus == "inactive") {
+                        <option value="inactive" selected>Inactive</option>
+                    } else {
+                        <option value="inactive">Inactive</option>
+                    }
                 </select>
             </div>
             <div class="d-flex gap-2 align-self-end">

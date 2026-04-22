@@ -9,8 +9,13 @@ namespace LeadManagementSystem.Controllers;
 public class ConfigurationController : Controller
 {
     private readonly DbHelper _db;
+    private readonly ILogger<ConfigurationController> _logger;
 
-    public ConfigurationController(DbHelper db) => _db = db;
+    public ConfigurationController(DbHelper db, ILogger<ConfigurationController> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     // ── Helper: load items from a config table ──────────────
     private async Task<List<ConfigItem>> LoadTable(string table)

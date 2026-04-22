@@ -31,9 +31,21 @@
             </div>
             <select name="filterRole" class="form-select" style="width:auto;">
                 <option value="">All Roles</option>
-                <option value="Admin"    selected="@(filterRole=="Admin")">Admin</option>
-                <option value="Employee" selected="@(filterRole=="Employee")">Employee</option>
-                <option value="Client"   selected="@(filterRole=="Client")">Client</option>
+                @if (filterRole == "Admin") {
+                    <option value="Admin" selected>Admin</option>
+                } else {
+                    <option value="Admin">Admin</option>
+                }
+                @if (filterRole == "Employee") {
+                    <option value="Employee" selected>Employee</option>
+                } else {
+                    <option value="Employee">Employee</option>
+                }
+                @if (filterRole == "Client") {
+                    <option value="Client" selected>Client</option>
+                } else {
+                    <option value="Client">Client</option>
+                }
             </select>
             <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Search</button>
             @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(filterRole))

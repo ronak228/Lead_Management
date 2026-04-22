@@ -17,6 +17,11 @@
     var sessionRole = Context.Session.GetString("UserRole") ?? "";
     var ctrl        = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var initials    = sessionName.Length > 0 ? sessionName[0].ToString().ToUpper() : "U";
+    
+    // Role constants - avoid magic strings
+    const string RoleAdmin = "Admin";
+    const string RoleEmployee = "Employee";
+    const string RoleClient = "Client";
 }
 @if (isLoggedIn)
 {
@@ -42,7 +47,7 @@
       </li>
 
       @* ── Staff navigation (Admin + Employee) ── *@
-      @if (sessionRole == "Admin" || sessionRole == "Employee")
+      @if (sessionRole == RoleAdmin || sessionRole == RoleEmployee)
       {
       <li class="nav-item">
         <a class="nav-link @(ctrl=="Inquiry"?"active":"")" asp-controller="Inquiry" asp-action="Index">
@@ -80,7 +85,7 @@
       }
 
       @* ── Admin-only section ── *@
-      @if (sessionRole == "Admin")
+      @if (sessionRole == RoleAdmin)
       {
       <li class="nav-section-label"><span>Admin</span></li>
       <li class="nav-item">
@@ -114,7 +119,7 @@
     <a asp-controller="Dashboard" asp-action="Index" class="@(ctrl=="Dashboard"?"active":"")">
       <i class="bi bi-grid-1x2"></i><span>Home</span>
     </a>
-    @if (sessionRole == "Admin" || sessionRole == "Employee")
+    @if (sessionRole == RoleAdmin || sessionRole == RoleEmployee)
     {
       <a asp-controller="Inquiry" asp-action="Index" class="@(ctrl=="Inquiry"?"active":"")">
         <i class="bi bi-search"></i><span>Inquiries</span>
@@ -122,11 +127,14 @@
       <a asp-controller="Client" asp-action="Index" class="@(ctrl=="Client"?"active":"")">
         <i class="bi bi-people"></i><span>Clients</span>
       </a>
+      <a asp-controller="Expense" asp-action="Index" class="@(ctrl=="Expense"?"active":"")">
+        <i class="bi bi-receipt"></i><span>Expenses</span>
+      </a>
       <a asp-controller="Payment" asp-action="Index" class="@(ctrl=="Payment"?"active":"")">
         <i class="bi bi-cash-coin"></i><span>Payments</span>
       </a>
     }
-    @if (sessionRole == "Client")
+    @if (sessionRole == RoleClient)
     {
       <a asp-controller="Inquiry" asp-action="Index" class="@(ctrl=="Inquiry"?"active":"")">
         <i class="bi bi-search"></i><span>Inquiries</span>
@@ -149,8 +157,8 @@
       <button class="btn-toggle" id="sidebarToggle"><i class="bi bi-list fs-5"></i></button>
       <span class="page-title">@ViewData["Title"]</span>
       <div class="ms-auto d-flex align-items-center gap-2">
-        <span style="background:var(--brand-soft);color:var(--brand);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;">@sessionRole</span>
-        <span class="text-muted" style="font-size:.8rem;">@sessionName</span>
+        <span class="u-role-badge" style="background:var(--brand-soft);color:var(--brand);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;">@sessionRole</span>
+        <span class="u-name-text text-muted" style="font-size:.8rem;">@sessionName</span>
       </div>
     </nav>
     <main class="main-content">

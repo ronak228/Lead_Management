@@ -38,7 +38,9 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly    = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite    = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = builder.Environment.IsProduction()
+        ? Microsoft.AspNetCore.Http.CookieSecurePolicy.Always
+        : Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
     options.Cookie.Name        = ".LeadMgmt.Session";
 });
 
@@ -48,6 +50,9 @@ builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("
 
 // DB helper (scoped) — uses singleton NpgsqlDataSource
 builder.Services.AddScoped<DbHelper>();
+
+// Service layer (scoped)
+builder.Services.AddScoped<ClientService>();
 
 // Email service (scoped) — for notifications
 builder.Services.AddScoped<IEmailService, EmailService>();

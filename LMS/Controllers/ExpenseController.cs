@@ -13,11 +13,13 @@ public class ExpenseController : Controller
 {
     private readonly DbHelper _db;
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<ExpenseController> _logger;
 
-    public ExpenseController(DbHelper db, IWebHostEnvironment env)
+    public ExpenseController(DbHelper db, IWebHostEnvironment env, ILogger<ExpenseController> logger)
     {
         _db  = db;
         _env = env;
+        _logger = logger;
     }
 
     // ── LIST ─────────────────────────────────────────────────

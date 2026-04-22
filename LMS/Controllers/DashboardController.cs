@@ -9,7 +9,12 @@ namespace LeadManagementSystem.Controllers;
 public class DashboardController : Controller
 {
     private readonly DbHelper _db;
-    public DashboardController(DbHelper db) => _db = db;
+    private readonly ILogger<DashboardController> _logger;
+    public DashboardController(DbHelper db, ILogger<DashboardController> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<IActionResult> Index()
     {
@@ -38,7 +43,7 @@ public class DashboardController : Controller
         if (role == "Client" && userId.HasValue)
         {
             var clientRow = await _db.QueryAsync(
-                "SELECT is_active, client_ref, company_name, total_amount FROM users WHERE id=@uid AND is_deleted=FALSE",
+                "SELECT is_active, client_ref, company_name, total_amount, phone FROM users WHERE id=@uid AND is_deleted=FALSE",
                 new() { ["@uid"] = userId.Value });
             
             if (clientRow.Count > 0)
@@ -50,16 +55,52 @@ public class DashboardController : Controller
                 
                 // Client accessing dashboard
                 var cid   = userId.Value;
+                var phone = clientRow[0]["phone"]?.ToString() ?? "";
+                
+                _logger.LogInformation($"Dashboard: Client ID={cid}, Phone={phone}");
+                
                 var paid  = await SafeSum("SELECT COALESCE(SUM(amount),0) FROM payments WHERE client_id=@cid AND is_deleted=FALSE", new() { ["@cid"] = cid });
                 // Get total_amount from user record (but validate it's not negative)
                 var total = Convert.ToDecimal(clientRow[0]["total_amount"] ?? 0m);
                 if (total < 0) total = 0;
                 
-                ViewBag.ClientRef   = clientRow[0]["client_ref"]?.ToString();
-                ViewBag.CompanyName = clientRow[0]["company_name"]?.ToString();
-                ViewBag.TotalAmount = total;
-                ViewBag.TotalPaid   = paid;
-                ViewBag.Remaining   = Math.Max(0, total - paid);  // Never show negative remaining
+                ViewBag.ClientRef       = clientRow[0]["client_ref"]?.ToString();
+                ViewBag.CompanyName     = clientRow[0]["company_name"]?.ToString();
+                ViewBag.TotalAmount     = total;
+                ViewBag.TotalPaid       = paid;
+                ViewBag.RemainingBalance = Math.Max(0, total - paid);  // Never show negative remaining (#19)
+                
+                // DEBUG: Log phone for troubleshooting
+                ViewBag.DebugPhone = phone ?? "[NULL]";
+                ViewBag.DebugUserId = cid;
+                
+                // Client inquiries - DIRECT COUNT without SafeCount
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(phone))
+                    {
+                        _logger.LogWarning($"Client {cid} has no phone number");
+                        ViewBag.ClientInquiries = 0;
+                    }
+                    else
+                    {
+                        var countResult = await _db.ExecuteScalarAsync(
+                            "SELECT COUNT(*) FROM inquiries WHERE is_deleted=FALSE AND client_number=@phone",
+                            new() { ["@phone"] = phone.Trim() });
+                        var count = countResult != null && countResult != DBNull.Value ? Convert.ToInt64(countResult) : 0;
+                        ViewBag.ClientInquiries = count;
+                        _logger.LogInformation($"Inquiries count for phone '{phone.Trim()}': {count}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Inquiry count error: {ex.Message} | Phone: {phone}");
+                    ViewBag.ClientInquiries = 0;
+                }
+                
+                // Payment count
+                ViewBag.PaymentCount = await SafeCount("SELECT COUNT(*) FROM payments WHERE client_id=@cid AND is_deleted=FALSE", new() { ["@cid"] = cid });
+                
                 try
                 {
                     ViewBag.RecentPayments = await _db.QueryAsync(@"
@@ -68,6 +109,30 @@ public class DashboardController : Controller
                         ORDER BY payment_date DESC LIMIT 5", new() { ["@cid"] = cid });
                 }
                 catch { ViewBag.RecentPayments = null; }
+                
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(phone))
+                    {
+                        ViewBag.RecentInquiries = null;
+                    }
+                    else
+                    {
+                        ViewBag.RecentInquiries = await _db.QueryAsync(@"
+                            SELECT i.id, i.hotel_name, i.status_id, i.created_at, 
+                                   (SELECT COALESCE(name, 'Unknown') FROM cfg_status WHERE id=i.status_id LIMIT 1) as status
+                            FROM inquiries i 
+                            WHERE i.is_deleted=FALSE AND i.client_number=@phone
+                            ORDER BY i.created_at DESC LIMIT 5", 
+                            new() { ["@phone"] = phone.Trim() });
+                        _logger.LogInformation($"Recent inquiries retrieved for phone '{phone.Trim()}': {(ViewBag.RecentInquiries as List<Dictionary<string, object?>>)?.Count ?? 0}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Recent inquiries error: {ex.Message} | Phone: {phone}");
+                    ViewBag.RecentInquiries = null;
+                }
             }
             return View();
         }

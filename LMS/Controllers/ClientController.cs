@@ -2,6 +2,7 @@ using LeadManagementSystem.Data;
 using LeadManagementSystem.Filters;
 using LeadManagementSystem.Helpers;
 using LeadManagementSystem.Models;
+using LeadManagementSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using ClosedXML.Excel;
 
@@ -12,7 +13,14 @@ namespace LeadManagementSystem.Controllers;
 public class ClientController : Controller
 {
     private readonly DbHelper _db;
-    public ClientController(DbHelper db) => _db = db;
+    private readonly ClientService _clientService;
+    private readonly ILogger<ClientController> _logger;
+    public ClientController(DbHelper db, ClientService clientService, ILogger<ClientController> logger)
+    {
+        _db = db;
+        _clientService = clientService;
+        _logger = logger;
+    }
 
     // ── LIST ─────────────────────────────────────────────────
     public async Task<IActionResult> Index(string? search, string? filterStatus, int page = 1)
@@ -34,7 +42,7 @@ public class ClientController : Controller
         
         if (!string.IsNullOrWhiteSpace(search))
         {
-            countSql += " AND (LOWER(c.company_name) LIKE @s OR LOWER(c.contact_person) LIKE @s OR c.phone LIKE @s OR c.client_ref LIKE @s)";
+            countSql += " AND (LOWER(c.company_name) LIKE @s OR LOWER(c.contact_person) LIKE @s OR LOWER(c.phone) LIKE @s OR LOWER(c.client_ref) LIKE @s)";
             p["@s"] = $"%{search.Trim().ToLower()}%";
         }
         if (filterStatus == "active")   countSql += " AND c.is_active=TRUE";
@@ -59,7 +67,7 @@ public class ClientController : Controller
         
         if (!string.IsNullOrWhiteSpace(search))
         {
-            sql += " AND (LOWER(c.company_name) LIKE @s OR LOWER(c.contact_person) LIKE @s OR c.phone LIKE @s OR c.client_ref LIKE @s)";
+            sql += " AND (LOWER(c.company_name) LIKE @s OR LOWER(c.contact_person) LIKE @s OR LOWER(c.phone) LIKE @s OR LOWER(c.client_ref) LIKE @s)";
             p["@s"] = $"%{search.Trim().ToLower()}%";
         }
         if (filterStatus == "active")   sql += " AND c.is_active=TRUE";
@@ -124,6 +132,132 @@ public class ClientController : Controller
         return View(client);
     }
 
+    // ── CREATE GET ───────────────────────────────────────────
+    [SessionAuth(SessionHelper.RoleAdmin, SessionHelper.RoleEmployee)]
+    public async Task<IActionResult> Create(int? fromInquiryId = null)
+    {
+        var vm = new ClientFormViewModel
+        {
+            Cities = await ConfigHelper.LoadActiveAsync(_db, "cfg_city"),
+            Modules = await ConfigHelper.LoadActiveAsync(_db, "cfg_module")
+        };
+
+        // Pre-fill from inquiry if provided
+        if (fromInquiryId.HasValue && fromInquiryId.Value > 0)
+        {
+            var inqRows = await _db.QueryAsync(
+                @"SELECT id, hotel_name, client_name, client_number, city_id, module_id, note
+                  FROM inquiries WHERE id=@id AND is_deleted=FALSE",
+                new() { ["@id"] = fromInquiryId.Value });
+
+            if (inqRows.Count > 0)
+            {
+                var inq = inqRows[0];
+                vm.Client.CompanyName = inq["hotel_name"]?.ToString() ?? "";
+                vm.Client.ContactPerson = inq["client_name"]?.ToString() ?? "";
+                vm.Client.Phone = PhoneHelper.Normalize(inq["client_number"]?.ToString() ?? "");
+                vm.Client.Notes = inq["note"]?.ToString();
+                vm.Client.CityId = inq["city_id"] is DBNull or null ? null : Convert.ToInt32(inq["city_id"]);
+                vm.Client.ModuleId = inq["module_id"] is DBNull or null ? null : Convert.ToInt32(inq["module_id"]);
+                vm.Client.SourceInquiryId = fromInquiryId.Value;
+                ViewBag.FromInquiryId = fromInquiryId.Value;
+            }
+        }
+
+        return View(vm);
+    }
+
+    // ── CREATE POST ──────────────────────────────────────────
+    [HttpPost]
+    [SessionAuth(SessionHelper.RoleAdmin, SessionHelper.RoleEmployee)]
+    public async Task<IActionResult> Create(ClientFormViewModel vm, int? fromInquiryId = null)
+    {
+        if (string.IsNullOrWhiteSpace(vm.Client.CompanyName) ||
+            string.IsNullOrWhiteSpace(vm.Client.ContactPerson) ||
+            string.IsNullOrWhiteSpace(vm.Client.Phone))
+        {
+            TempData["Error"] = "Company Name, Contact Person, and Phone are required.";
+            await ReloadDropdowns(vm);
+            return View(vm);
+        }
+
+        var phone = PhoneHelper.Normalize(vm.Client.Phone.Trim());
+
+        try
+        {
+            // Check for duplicate phone
+            var dup = await _db.ExecuteScalarAsync(
+                "SELECT COUNT(*) FROM users WHERE phone=@p AND is_deleted=FALSE",
+                new() { ["@p"] = phone });
+
+            if (Convert.ToInt64(dup) > 0)
+            {
+                TempData["Error"] = $"Another account with phone {phone} already exists.";
+                await ReloadDropdowns(vm);
+                return View(vm);
+            }
+
+            var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
+            var cityId = await CityHelper.ResolveCityIdAsync(_db, vm.Client.CityText);
+
+            // Use transaction to ensure atomicity: create user + create client + mark inquiry as converted
+            var newClientId = await _db.ExecuteTransactionAsync(async (conn, tx) =>
+            {
+                // Insert new user (client role)
+                var clientId = Convert.ToInt32(await _db.ExecuteScalarAsync(conn, tx,
+                    @"INSERT INTO users (full_name, email, password, role, company_name, contact_person, phone,
+                       city_id, module_id, address, notes, is_active, created_by, created_at)
+                      VALUES (@fn, @em, @pwd, @role, @cn, @cp, @ph, @ci, @mo, @ad, @no, TRUE, @cb, NOW())
+                      RETURNING id",
+                    new()
+                    {
+                        ["@fn"] = vm.Client.ContactPerson.Trim(),
+                        ["@em"] = (object?)(vm.Client.Email?.Trim()) ?? DBNull.Value,
+                        ["@pwd"] = vm.CreateLoginAccount
+                            ? PasswordHelper.Hash(vm.InitialPassword ?? "temp-password")
+                            : PasswordHelper.Hash(Guid.NewGuid().ToString()),
+                        ["@role"] = SessionHelper.RoleClient,
+                        ["@cn"] = vm.Client.CompanyName.Trim(),
+                        ["@cp"] = vm.Client.ContactPerson.Trim(),
+                        ["@ph"] = phone,
+                        ["@ci"] = (object?)cityId ?? DBNull.Value,
+                        ["@mo"] = (object?)vm.Client.ModuleId ?? DBNull.Value,
+                        ["@ad"] = (object?)(vm.Client.Address?.Trim()) ?? DBNull.Value,
+                        ["@no"] = (object?)(vm.Client.Notes?.Trim()) ?? DBNull.Value,
+                        ["@cb"] = (object?)userId ?? DBNull.Value
+                    }));
+
+                // Generate client ref
+                await _db.ExecuteNonQueryAsync(conn, tx,
+                    @"UPDATE users SET
+                      client_ref=CONCAT('LMS-', LPAD(nextval('client_ref_seq')::text, 4, '0'))
+                      WHERE id=@id",
+                    new() { ["@id"] = clientId });
+
+                // If converting from inquiry, mark inquiry as converted and link it
+                if (fromInquiryId.HasValue && fromInquiryId.Value > 0)
+                {
+                    await _db.ExecuteNonQueryAsync(conn, tx,
+                        "UPDATE inquiries SET is_converted=TRUE, converted_client_id=@cid WHERE id=@id",
+                        new() { ["@cid"] = clientId, ["@id"] = fromInquiryId.Value });
+                }
+
+                return clientId;
+            });
+
+            TempData["Success"] = "Client created successfully.";
+            _logger.LogInformation($"Client created: ID={newClientId}, Company={vm.Client.CompanyName}, CreatedBy={userId}");
+            return RedirectToAction("Details", new { id = newClientId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Client creation failed: {ex.Message}");
+            TempData["Error"] = $"An error occurred: {ex.Message}";
+            await ReloadDropdowns(vm);
+            return View(vm);
+        }
+    }
+
     // ── EDIT GET ─────────────────────────────────────────────
     [SessionAuth(SessionHelper.RoleClient)]
     public async Task<IActionResult> Edit(int id)
@@ -136,7 +270,7 @@ public class ClientController : Controller
         if (!userId.HasValue || client.Id != userId.Value)
             return RedirectToAction("AccessDenied", "Auth");
 
-        return View(new ClientFormViewModel { Client = client, Cities = await LoadActive("cfg_city"), Modules = await LoadActive("cfg_module") });
+        return View(new ClientFormViewModel { Client = client, Cities = await ConfigHelper.LoadActiveAsync(_db, "cfg_city"), Modules = await ConfigHelper.LoadActiveAsync(_db, "cfg_module") });
     }
 
     // ── EDIT POST ────────────────────────────────────────────
@@ -160,7 +294,7 @@ public class ClientController : Controller
             return View(vm);
         }
 
-        var phone = NormalizePhone(vm.Client.Phone.Trim());
+var phone = PhoneHelper.Normalize(vm.Client.Phone.Trim());
         
         try
         {
@@ -177,7 +311,7 @@ public class ClientController : Controller
             }
 
             var editUserId = HttpContext.Session.GetInt32(SessionHelper.UserId);
-            var cityId = await ResolveCityIdAsync(vm.Client.CityText);
+            var cityId = await CityHelper.ResolveCityIdAsync(_db, vm.Client.CityText);
 
             // Clients update contact details and module
             await _db.ExecuteNonQueryAsync(@"
@@ -207,19 +341,6 @@ public class ClientController : Controller
             await ReloadDropdowns(vm);
             return View(vm);
         }
-    }
-
-    // ── TOGGLE ACTIVE ────────────────────────────────────────
-    [HttpPost]
-    public async Task<IActionResult> Toggle(int id)
-    {
-        if (!SessionHelper.IsAdmin(HttpContext.Session)) return RedirectToAction("AccessDenied", "Auth");
-        var userId = HttpContext.Session.GetInt32(SessionHelper.UserId);
-        await _db.ExecuteNonQueryAsync(
-            "UPDATE users SET is_active=NOT is_active, updated_by=@ub, updated_at=NOW() WHERE id=@id",
-            new() { ["@id"] = id, ["@ub"] = (object?)userId ?? DBNull.Value });
-        TempData["Success"] = "Client status updated.";
-        return RedirectToAction("Index");
     }
 
     // ── TOGGLE ACTIVE STATUS ────────────────────────────────
@@ -259,7 +380,7 @@ public class ClientController : Controller
             LEFT JOIN users u ON u.id=c.created_by
             WHERE c.is_deleted=FALSE AND c.role='Client'";
         var p = new Dictionary<string, object?>();
-        if (!string.IsNullOrWhiteSpace(search)) { sql += " AND (LOWER(c.company_name) LIKE @s OR c.phone LIKE @s)"; p["@s"] = $"%{search.ToLower()}%"; }
+        if (!string.IsNullOrWhiteSpace(search)) { sql += " AND (LOWER(c.company_name) LIKE @s OR LOWER(c.phone) LIKE @s OR LOWER(c.client_ref) LIKE @s)"; p["@s"] = $"%{search.ToLower()}%"; }
         if (filterStatus == "active")   sql += " AND c.is_active=TRUE";
         if (filterStatus == "inactive") sql += " AND c.is_active=FALSE";
         sql += " ORDER BY c.created_at DESC";
@@ -298,36 +419,13 @@ public class ClientController : Controller
     }
 
     // ── private helpers ──────────────────────────────────────
-    private async Task<List<ConfigItem>> LoadActive(string table)
-    {
-        var rows = await _db.QueryAsync($"SELECT id, name FROM {table} WHERE is_active=TRUE ORDER BY name", new());
-        return rows.Select(r => new ConfigItem { Id = Convert.ToInt32(r["id"]), Name = r["name"]?.ToString() ?? "" }).ToList();
-    }
-
     private async Task ReloadDropdowns(ClientFormViewModel vm)
     {
-        vm.Cities  = await LoadActive("cfg_city");
-        vm.Modules = await LoadActive("cfg_module");
+        vm.Cities  = await ConfigHelper.LoadActiveAsync(_db, "cfg_city");
+        vm.Modules = await ConfigHelper.LoadActiveAsync(_db, "cfg_module");
     }
 
-    private async Task<Client?> GetById(int id)
-    {
-        var rows = await _db.QueryAsync(@"
-            SELECT c.id, c.client_ref, c.company_name, c.contact_person, c.phone, c.email,
-                   c.city_id, c.module_id, c.address, c.notes,
-                   c.total_amount, c.source_inquiry_id,
-                   c.is_active, c.is_deleted, c.created_by, c.updated_by, c.created_at, c.updated_at,
-                   ci.name AS city_name, mo.name AS module_name,
-                   u.full_name AS created_by_name,
-                   COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.client_id=c.id AND p.is_deleted=FALSE),0) AS total_paid
-            FROM users c
-            LEFT JOIN cfg_city   ci ON ci.id=c.city_id
-            LEFT JOIN cfg_module mo ON mo.id=c.module_id
-            LEFT JOIN users       u ON u.id=c.created_by
-            WHERE c.id=@id AND c.is_deleted=FALSE",
-            new() { ["@id"] = id });
-        return rows.Count == 0 ? null : MapRow(rows[0]);
-    }
+    private async Task<Client?> GetById(int id) => await new ClientService(_db).GetByIdAsync(id);
 
     private static Client MapRow(Dictionary<string, object?> r) => new()
     {
@@ -355,28 +453,5 @@ public class ClientController : Controller
         CreatedAt        = Convert.ToDateTime(r["created_at"]),
         UpdatedAt        = Convert.ToDateTime(r["updated_at"])
     };
-
-    private async Task<int?> ResolveCityIdAsync(string? cityText)
-    {
-        if (string.IsNullOrWhiteSpace(cityText)) return null;
-        var name = cityText.Trim();
-        // Atomic upsert prevents race condition on concurrent inserts for the same city name
-        var id = await _db.ExecuteScalarAsync(
-            "INSERT INTO cfg_city (name, is_active) VALUES (@n, TRUE) ON CONFLICT (name) DO NOTHING RETURNING id",
-            new() { ["@n"] = name });
-        if (id != null && id != DBNull.Value)
-            return Convert.ToInt32(id);
-        var rows = await _db.QueryAsync(
-            "SELECT id FROM cfg_city WHERE LOWER(name)=LOWER(@n) LIMIT 1",
-            new() { ["@n"] = name });
-        return rows.Count > 0 ? Convert.ToInt32(rows[0]["id"]) : null;
-    }
-
-    private static string NormalizePhone(string phone)
-    {
-        var digits = System.Text.RegularExpressions.Regex.Replace(phone, @"\D", "");
-        if (digits.Length > 10 && digits.StartsWith("91")) digits = digits[2..];
-        if (digits.Length > 10 && digits.StartsWith("0"))  digits = digits[1..];
-        return digits.Length >= 10 ? digits : phone.Trim();
-    }
 }
+

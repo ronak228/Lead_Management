@@ -33,72 +33,92 @@
 <div class="card mb-4">
     <div class="card-body py-3 px-4">
         <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
-            <div style="min-width:200px;flex:1;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Search</label>
+            <div class="flex-grow-1" style="min-width:160px;">
+                <label class="form-label mb-2">Search</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white" style="border-right:none;">
-                        <i class="bi bi-search text-muted" style="font-size:.8rem;"></i>
+                        <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" name="search" value="@Model.Search"
                            class="form-control" style="border-left:none;"
                            placeholder="Hotel, client, number…" />
                 </div>
             </div>
-            <div style="min-width:130px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Status</label>
+            <div class="flex-grow-1" style="min-width:140px;">
+                <label class="form-label mb-2">Status</label>
                 <select name="filterStatus" class="form-select">
                     <option value="">All Statuses</option>
                     @foreach (var s in Model.Statuses)
                     {
-                        <option value="@s.Id" selected="@(Model.FilterStatus == s.Id)">@s.Name</option>
+                        if (Model.FilterStatus == s.Id) {
+                            <option value="@s.Id" selected>@s.Name</option>
+                        } else {
+                            <option value="@s.Id">@s.Name</option>
+                        }
                     }
                 </select>
             </div>
-            <div style="min-width:130px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Module</label>
+            <div class="flex-grow-1" style="min-width:140px;">
+                <label class="form-label mb-2">Module</label>
                 <select name="filterModule" class="form-select">
                     <option value="">All Modules</option>
                     @foreach (var m in Model.Modules)
                     {
-                        <option value="@m.Id" selected="@(Model.FilterModule == m.Id)">@m.Name</option>
+                        if (Model.FilterModule == m.Id) {
+                            <option value="@m.Id" selected>@m.Name</option>
+                        } else {
+                            <option value="@m.Id">@m.Name</option>
+                        }
                     }
                 </select>
             </div>
             @if (!isClient)
             {
-            <div style="min-width:120px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">City</label>
+            <div class="flex-grow-1" style="min-width:130px;">
+                <label class="form-label mb-2">City</label>
                 <select name="filterCity" class="form-select">
                     <option value="">All Cities</option>
                     @foreach (var ci in Model.Cities)
                     {
-                        <option value="@ci.Id" selected="@(Model.FilterCity == ci.Id.ToString())">@ci.Name</option>
+                        if (Model.FilterCity == ci.Id.ToString()) {
+                            <option value="@ci.Id" selected>@ci.Name</option>
+                        } else {
+                            <option value="@ci.Id">@ci.Name</option>
+                        }
                     }
                 </select>
             </div>
             }
-            <div style="min-width:115px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Payment</label>
+            <div class="flex-grow-1" style="min-width:120px;">
+                <label class="form-label mb-2">Payment</label>
                 <select name="filterPayment" class="form-select">
                     <option value="">All</option>
-                    <option value="yes" selected="@(Model.FilterPayment=="yes")">Received</option>
-                    <option value="no"  selected="@(Model.FilterPayment=="no")">Pending</option>
+                    @if (Model.FilterPayment == "yes") {
+                        <option value="yes" selected>Received</option>
+                    } else {
+                        <option value="yes">Received</option>
+                    }
+                    @if (Model.FilterPayment == "no") {
+                        <option value="no" selected>Pending</option>
+                    } else {
+                        <option value="no">Pending</option>
+                    }
                 </select>
             </div>
             @if (!isClient)
             {
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
+            <div class="flex-grow-1" style="min-width:130px;">
+                <label class="form-label mb-2">From Date</label>
                 <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
             </div>
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
+            <div class="flex-grow-1" style="min-width:130px;">
+                <label class="form-label mb-2">To Date</label>
                 <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
             </div>
             }
-            <div class="d-flex gap-2 align-self-end">
-                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
-                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
+            <div class="d-flex gap-2 align-self-end w-100">
+                <button type="submit" class="btn btn-brand flex-grow-1">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary flex-grow-1">Reset</a>
             </div>
         </form>
     </div>

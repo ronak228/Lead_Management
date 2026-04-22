@@ -1,5 +1,5 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MimeKit;
 
 namespace LeadManagementSystem.Services;
 
@@ -217,7 +217,8 @@ public class EmailService : IEmailService
     }
 
     /// <summary>
-    /// Core SMTP email sending method
+    /// Core SMTP email sending method using MailKit
+    /// More reliable than legacy SmtpClient for production use
     /// </summary>
     private async Task SendEmailAsync(string toEmail, string subject, string body)
     {
@@ -227,31 +228,31 @@ public class EmailService : IEmailService
             return;
         }
 
-        using (var client = new SmtpClient(_settings.SmtpServer, _settings.SmtpPort))
+        try
         {
-            client.Credentials = new NetworkCredential(_settings.Username, _settings.Password);
-            client.EnableSsl = _settings.EnableSSL;
-            client.Timeout = 10000;
-
-            var mailMessage = new MailMessage
+            using (var client = new SmtpClient())
             {
-                From = new MailAddress(_settings.SenderEmail, _settings.SenderName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
+                await client.ConnectAsync(_settings.SmtpServer, _settings.SmtpPort, _settings.EnableSSL);
+                await client.AuthenticateAsync(_settings.Username, _settings.Password);
 
-            mailMessage.To.Add(toEmail);
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
+                message.To.Add(new MailboxAddress("", toEmail));
+                message.Subject = subject;
 
-            try
-            {
-                await client.SendMailAsync(mailMessage);
+                var builder = new BodyBuilder { HtmlBody = body };
+                message.Body = builder.ToMessageBody();
+
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                
                 _logger.LogInformation($"Email sent successfully to {toEmail}");
             }
-            finally
-            {
-                mailMessage.Dispose();
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to send email to {toEmail}: {ex.Message}");
+            throw;
         }
     }
 }

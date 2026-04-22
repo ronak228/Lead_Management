@@ -26,8 +26,9 @@ public class RateLimitAttribute : ActionFilterAttribute
             if (DateTime.UtcNow < record.LockUntil)
             {
                 var remainingSeconds = (int)(record.LockUntil - DateTime.UtcNow).TotalSeconds;
-                context.Result = new StatusCodeResult(429); // Too Many Requests
-                context.HttpContext.Response.Headers["Retry-After"] = remainingSeconds.ToString();
+                var remainingMinutes = remainingSeconds / 60 + 1;
+                context.HttpContext.Items["RateLimitError"] = $"Too many attempts. Please wait {remainingMinutes} minute(s) before trying again.";
+                context.Result = new RedirectToActionResult("Login", "Auth", new { error = $"Too many attempts. Wait {remainingMinutes} min." });
                 return;
             }
             else
