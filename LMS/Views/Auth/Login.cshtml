@@ -1,213 +1,598 @@
 @model LoginViewModel
 @{
-    Layout = null;
-    ViewData["Title"] = "Sign In";
+Layout = null;
+ViewData["Title"] = "Sign In";
 }
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign In – Lead Management</title>
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-    <!-- Bootstrap -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f5f7fb;
+        :root {
+            --brand: #6c5ce7;
+            --brand-dark: #5a4bd1;
+            --brand-light: #a29bfe;
+            --ink: #1a1d29;
+            --muted: #6b7280;
+            --line: #e6e8ef;
+            --bg: #f5f7fb;
+            --success: #10b981;
+            --danger: #ef4444;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animated gradient backdrop */
         .auth-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(1200px 600px at -10% -20%, rgba(108, 92, 231, 0.18), transparent 60%),
+                radial-gradient(900px 500px at 110% 120%, rgba(162, 155, 254, 0.20), transparent 60%),
+                var(--bg);
         }
 
+        .auth-page::before,
+        .auth-page::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: .5;
+            z-index: 0;
+            animation: float 12s ease-in-out infinite;
+        }
+
+        .auth-page::before {
+            width: 320px;
+            height: 320px;
+            background: #c8c2ff;
+            top: -80px;
+            left: -80px;
+        }
+
+        .auth-page::after {
+            width: 280px;
+            height: 280px;
+            background: #ffd3e0;
+            bottom: -90px;
+            right: -60px;
+            animation-delay: -4s;
+        }
+
+        @@keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-20px) translateX(15px);
+            }
+        }
+
+        /* Card */
         .auth-card {
+            position: relative;
+            z-index: 1;
             width: 100%;
-            max-width: 420px;
-            border-radius: 12px;
-            border: none;
+            max-width: 440px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: #fff;
+            box-shadow:
+                0 1px 2px rgba(16, 24, 40, 0.04),
+                0 20px 40px -20px rgba(108, 92, 231, 0.25);
+            animation: cardIn .5s cubic-bezier(.2, .8, .2, 1) both;
         }
 
+        @@keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-card .card-body {
+            padding: 26px 24px;
+        }
+
+        /* Logo */
         .auth-logo {
-            width: 50px;
-            height: 50px;
-            background: #6c5ce7;
-            color: white;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
+            color: #fff;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 20px;
+            margin: 0 auto 18px;
+            font-size: 24px;
+            box-shadow: 0 10px 24px -8px rgba(108, 92, 231, .55);
         }
 
-        .btn-brand {
-            background: #6c5ce7;
-            color: white;
-            border: none;
+        .auth-logo {
+            margin: 0 auto 12px;
         }
 
-        .btn-brand:hover {
-            background: #5a4bd1;
+        .auth-sub {
+            margin: 0 0 16px;
+        }
+
+        .auth-title {
+            font-weight: 700;
+            font-size: 22px;
+            text-align: center;
+            margin: 0 0 4px;
+            letter-spacing: -0.01em;
+        }
+
+        .auth-sub {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 0 24px;
+        }
+
+        /* Labels & inputs */
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .input-group {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+            overflow: hidden;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, .12);
         }
 
         .input-group-text {
-            background: white;
+            background: #fff;
+            border: none;
+            color: var(--muted);
+            padding-left: 14px;
+        }
+
+        .form-control {
+            border: none;
+            padding: 12px 12px 12px 6px;
+            font-size: 14.5px;
+            background: transparent;
         }
 
         .form-control:focus {
             box-shadow: none;
-            border-color: #6c5ce7;
+            background: transparent;
         }
 
-        /* MOBILE FIX */
+        .pwd-toggle {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            padding: 0 14px;
+            cursor: pointer;
+        }
+
+        .pwd-toggle:hover {
+            color: var(--brand);
+        }
+
+        /* Validation */
+        .input-group.valid-input {
+            border-color: var(--success);
+        }
+
+        .input-group.invalid-input {
+            border-color: var(--danger);
+        }
+
+        .validation-msg {
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+            /* 🔥 no space when empty */
+        }
+
+        .validation-msg.show {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .valid-text {
+            color: var(--success);
+        }
+
+        .invalid-text {
+            color: var(--danger);
+        }
+
+        /* Options row */
+        .options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 6px 0 14px;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--brand);
+            border-color: var(--brand);
+        }
+
+        .form-check-label {
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .link-brand {
+            color: var(--brand);
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .link-brand:hover {
+            color: var(--brand-dark);
+            text-decoration: underline;
+        }
+
+        /* Button */
+        .btn-brand {
+            width: 100%;
+            background: linear-gradient(135deg, var(--brand), #8a7cf0);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14.5px;
+            transition: transform .08s ease, box-shadow .2s ease, filter .2s ease;
+            box-shadow: 0 8px 20px -8px rgba(108, 92, 231, .6);
+        }
+
+        .btn-brand:hover {
+            color: #fff;
+            filter: brightness(1.05);
+        }
+
+        .btn-brand:active {
+            transform: translateY(1px);
+        }
+
+        .btn-brand:disabled {
+            opacity: .7;
+            cursor: not-allowed;
+        }
+
+        .btn-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, .5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: -2px;
+            animation: spin .7s linear infinite;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 12px;
+            margin: 16px 0 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        .btn-social {
+            width: 100%;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background .15s, border-color .15s;
+        }
+
+        .btn-social:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* Footer */
+        .auth-footer {
+            text-align: center;
+            font-size: 13.5px;
+            color: var(--muted);
+            margin-top: 14px;
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-control {
+            padding: 10px 10px 10px 6px;
+        }
+
+        .input-group-text {
+            padding-left: 10px;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        /* Mobile */
         @@media (max-width: 576px) {
-            .auth-card {
-                max-width: 100%;
-                border-radius: 10px;
-            }
-
             .auth-card .card-body {
-                padding: 16px !important;
+                padding: 24px 20px;
             }
 
-            .auth-card .p-4 {
-                padding: 16px !important;
-            }
-
-            h5 {
-                font-size: 1.1rem;
-            }
-
-            .form-label {
-                font-size: 0.85rem;
-            }
-
-            .btn {
-                font-size: 0.85rem;
+            .auth-title {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 
 <body>
+    <div class="auth-page">
+        <div class="card auth-card">
+            <div class="card-body">
 
-<div class="auth-page">
-    <div class="auth-card card shadow-sm overflow-hidden">
-
-        <!-- HEADER -->
-        <div class="p-4 pb-0 text-center">
-            <div class="auth-logo">
-                <i class="bi bi-building"></i>
-            </div>
-            <h5 class="fw-bold mb-1">Welcome back</h5>
-            <p class="text-muted small">Sign in to your Lead Management account</p>
-        </div>
-
-        <!-- BODY -->
-        <div class="card-body p-4 pt-3">
-
-            @if (TempData["RegisterSuccess"] != null)
-            {
-                <div class="alert alert-success py-2 small mb-3">
-                    <i class="bi bi-check-circle me-1"></i>@TempData["RegisterSuccess"]
+                <!-- Header -->
+                <div class="auth-logo">
+                    <i class="bi bi-shield-lock-fill"></i>
                 </div>
-            }
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-sub">Sign in to your Lead Management account</p>
 
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="alert alert-danger py-2 small mb-3">
-                    <i class="bi bi-exclamation-triangle me-1"></i>@Model.ErrorMessage
+                <!-- Alerts -->
+                @if (TempData["RegisterSuccess"] != null)
+                {
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>@TempData["RegisterSuccess"]</span>
                 </div>
-            }
+                }
 
-            @if (ViewBag.Error != null)
-            {
-                <div class="alert alert-danger py-2 small mb-3">
-                    <i class="bi bi-exclamation-triangle me-1"></i>@ViewBag.Error
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                <div class="alert alert-danger mb-3">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>@Model.ErrorMessage</span>
                 </div>
-            }
+                }
 
-            <form asp-action="Login" method="post">
+                @if (ViewBag.Error != null)
+                {
+                <div class="alert alert-danger mb-3">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>@ViewBag.Error</span>
+                </div>
+                }
 
-                <!-- EMAIL -->
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-envelope text-muted"></i>
-                        </span>
-                        <input asp-for="Email" type="email" class="form-control" placeholder="admin@hotel.com" />
+                <!-- Form -->
+                <form method="post" id="loginForm" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <!-- Email -->
+                    <div class="mb-2">
+                        <label class="form-label" for="email">Email Address</label>
+                        <div class="input-group" id="emailGroup">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" id="email" name="Email" class="form-control"
+                                placeholder="you@@hotel.com" value="@Model?.Email" autocomplete="email" required />
+                        </div>
+                        <div class="validation-msg" id="emailMsg"></div>
                     </div>
-                </div>
 
-                <!-- PASSWORD -->
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-lock text-muted"></i>
-                        </span>
-                        <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" id="pwd1" />
-                        <button type="button" class="btn btn-light" onclick="togglePassword('#pwd1', this)">
-                            <i class="bi bi-eye text-muted"></i>
-                        </button>
+                    <!-- Password -->
+                    <div class="mb-2">
+                        <label class="form-label" for="pwd1">Password</label>
+                        <div class="input-group" id="pwdGroup">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" id="pwd1" name="Password" class="form-control"
+                                placeholder="Enter your password" autocomplete="current-password"
+                                oninput="validatePassword()" required />
+                            <button type="button" class="pwd-toggle" onclick="togglePassword('#pwd1', this)"
+                                aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="validation-msg" id="pwdMsg"></div>
                     </div>
-                </div>
 
-                <!-- BUTTON -->
-                <button type="submit" class="btn btn-brand w-100 py-2 fw-semibold">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    <!-- Options -->
+                    <div class="options-row">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember" name="RememberMe" />
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+                        <a href="/Auth/ForgotPassword" class="link-brand">Forgot password?</a>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-brand" id="submitBtn">
+                        <span id="btnText"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
+                    </button>
+                </form>
+
+                <!-- Divider + Social -->
+                <div class="divider">OR CONTINUE WITH</div>
+                <button type="button" class="btn-social">
+                    <i class="bi bi-google" style="color:#ea4335;"></i>
+                    <span>Sign in with Google</span>
                 </button>
 
-            </form>
-
-            <!-- LINKS -->
-            <p class="text-center small text-muted mt-3 mb-0">
-                Don't have an account?
-                <a asp-action="Register" class="fw-semibold text-decoration-none" style="color:#6c5ce7;">
-                    Create one
-                </a>
-                <br />
-                <a asp-action="ForgotPassword" class="fw-semibold text-decoration-none" style="color:#6c5ce7;">
-                    Forgot password?
-                </a>
-            </p>
+                <!-- Footer -->
+                <div class="auth-footer">
+                    Don't have an account?
+                    <a href="/Auth/Register" class="link-brand">Create one</a>
+                </div>
+            </div>
         </div>
-
-        
-
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    function togglePassword(inputId, btn) {
-        const input = document.querySelector(inputId);
-        const icon = btn.querySelector('i');
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.replace('bi-eye', 'bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.replace('bi-eye-slash', 'bi-eye');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePassword(inputId, btn) {
+            const input = document.querySelector(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
         }
-    }
-</script>
+        // Email validation
+        const emailInput = document.getElementById('email');
+        const emailGroup = document.getElementById('emailGroup');
+        const emailMsg = document.getElementById('emailMsg');
+        emailInput.addEventListener('input', validateEmail);
 
+        function validateEmail() {
+            const v = emailInput.value.trim();
+            const re = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            emailGroup.classList.remove('valid-input', 'invalid-input');
+            msg.innerHTML = '';
+            msg.classList.remove('show');
+            if (v.length === 0) return true;
+            if (re.test(v)) {
+                emailGroup.classList.add('valid-input');
+                emailMsg.innerHTML = '<i class="bi bi-check-circle-fill"></i> Looks good';
+                emailMsg.className = 'validation-msg valid-text';
+                return true;
+            } else {
+                emailGroup.classList.add('invalid-input');
+                emailMsg.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Please enter a valid email';
+                msg.className = 'validation-msg invalid-text show';
+                return false;
+            }
+        }
+        // Password validation (min 8, strong)
+        function validatePassword() {
+            const input = document.getElementById('pwd1');
+            const group = document.getElementById('pwdGroup');
+            const msg = document.getElementById('pwdMsg');
+            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&])[A-Za-z\d@@$!%*?&]{8,}$/;
+            group.classList.remove('valid-input', 'invalid-input');
+            if (input.value.length === 0) {
+                msg.innerHTML = '';
+                return true;
+            }
+            if (regex.test(input.value)) {
+                group.classList.add('valid-input');
+                msg.innerHTML = '<i class="bi bi-shield-check"></i> Strong password';
+                msg.className = 'validation-msg valid-text show';
+                return true;
+            } else {
+                group.classList.add('invalid-input');
+                msg.innerHTML = '<i class="bi bi-info-circle"></i> Min 8 chars · A-Z, a-z, number & symbol';
+                msg.className = 'validation-msg invalid-text';
+                return false;
+            }
+        }
+        // Submit handler with loading state
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const okEmail = validateEmail();
+            const pwd = document.getElementById('pwd1').value;
+            if (!okEmail || pwd.length === 0) {
+                e.preventDefault();
+                if (pwd.length === 0) {
+                    document.getElementById('pwdGroup').classList.add('invalid-input');
+                    const msg = document.getElementById('pwdMsg');
+                    msg.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Password is required';
+                    msg.className = 'validation-msg invalid-text';
+                }
+                return;
+            }
+            const btn = document.getElementById('submitBtn');
+            const txt = document.getElementById('btnText');
+            btn.disabled = true;
+            txt.innerHTML = '<span class="btn-spinner"></span>Signing in...';
+        });
+    </script>
 </body>
+
 </html>
