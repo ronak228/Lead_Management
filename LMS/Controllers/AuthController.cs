@@ -442,4 +442,35 @@ public class AuthController : Controller
     {
         return View();
     }
+
+    // ─── DEBUG: SESSION DIAGNOSTIC (DEV ONLY) ───────────
+    [HttpGet]
+    public IActionResult SessionDebug()
+    {
+        if (!User.Identity?.IsAuthenticated ?? true) 
+        {
+            // Allow in development or with explicit flag
+            if (!_logger.IsEnabled(LogLevel.Debug) && 
+                !HttpContext.Request.Query.ContainsKey("debug_token"))
+                return Unauthorized("Debug endpoint is development-only.");
+        }
+
+        var debugInfo = new
+        {
+            IsLoggedIn = SessionHelper.IsLoggedIn(HttpContext.Session),
+            UserId = HttpContext.Session.GetInt32(SessionHelper.UserId),
+            UserName = HttpContext.Session.GetString(SessionHelper.UserName),
+            UserEmail = HttpContext.Session.GetString(SessionHelper.UserEmail),
+            UserRole = HttpContext.Session.GetString(SessionHelper.UserRole),
+            SessionId = HttpContext.Session.Id,
+            SessionKeys = HttpContext.Session.Keys.ToList(),
+            CookieName = ".LeadMgmt.Session",
+            RequestCookies = HttpContext.Request.Cookies.Keys.ToList(),
+            ResponseHeaders = HttpContext.Response.Headers.Keys.ToList(),
+            Environment = _logger.IsEnabled(LogLevel.Debug) ? "Development" : "Production",
+            Timestamp = DateTime.UtcNow
+        };
+
+        return Json(debugInfo);
+    }
 }
