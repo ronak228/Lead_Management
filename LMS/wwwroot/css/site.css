@@ -18,7 +18,45 @@
     --warning:    #f59e0b;
     --danger:     #ef4444;
 }
+/* 🔥 GLOBAL RESPONSIVE (ALL AUTH PAGES) */
 
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+}
+
+.auth-card .card-body {
+    padding: clamp(20px, 4vw, 32px);
+}
+
+.auth-title {
+    font-size: clamp(18px, 4vw, 22px);
+}
+
+.form-control {
+    font-size: clamp(13px, 3.5vw, 14.5px);
+}
+
+.btn-brand {
+    font-size: clamp(13px, 3.5vw, 14.5px);
+    padding: clamp(10px, 3vw, 12px);
+}
+
+@media (max-width: 360px) {
+    .auth-card {
+        border-radius: 14px;
+    }
+
+    .auth-card .card-body {
+        padding: 18px 14px;
+    }
+
+    .auth-logo {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'Inter', system-ui, sans-serif; background: var(--surface); color: var(--text-main); margin: 0; }
 

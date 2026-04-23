@@ -1,4 +1,4 @@
-@model ConfigurationViewModel
+@* @model ConfigurationViewModel
 @{
     ViewData["Title"] = "Configuration";
     var tabs = new[] {
@@ -153,6 +153,522 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-brand btn-sm px-4">
+                            <i class="bi bi-check me-1"></i>Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+// Auto-open add modal if there was a validation error on add
+@if (TempData["OpenAddModal"] != null)
+{
+    <text>
+    document.addEventListener('DOMContentLoaded', function() {
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    });
+    </text>
+}
+</script>
+} *@
+
+
+
+
+
+
+
+
+
+@model ConfigurationViewModel
+@{
+    ViewData["Title"] = "Configuration";
+    var tabs = new[] {
+        ("status",   "Status",   "bi-flag"),
+        ("module",   "Module",   "bi-box"),
+        ("product",  "Product",  "bi-grid"),
+        ("category", "Category", "bi-tag"),
+        ("city",     "City",     "bi-geo-alt")
+    };
+}
+
+<style>
+    /* Clean professional styles matching Payments & Expenses */
+    
+    /* Card enhancements */
+    .card {
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        background: #ffffff;
+    }
+    
+    /* Button refinements */
+    .btn-brand {
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-brand:hover {
+        background-color: #0b5ed7;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-success {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1.5px solid #198754;
+        color: #198754;
+    }
+    
+    .btn-outline-success:hover {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-warning {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        border: 1.5px solid #ffc107;
+        color: #ffc107;
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: #ffc107;
+        color: white;
+    }
+    
+    .btn-light {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    /* Custom tab styling */
+    .nav-tabs-custom {
+        display: flex;
+        gap: 4px;
+        border-bottom: none;
+        margin-bottom: 0;
+        padding: 0;
+        list-style: none;
+        background: #f8f9fa;
+        border-radius: 12px 12px 0 0;
+        padding: 4px 4px 0 4px;
+    }
+    
+    .nav-tabs-custom .nav-item {
+        margin-bottom: 0;
+    }
+    
+    .nav-tabs-custom .nav-link {
+        border: none;
+        padding: 0.65rem 1.2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        background: transparent;
+        border-radius: 10px 10px 0 0;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-tabs-custom .nav-link i {
+        font-size: 0.85rem;
+    }
+    
+    .nav-tabs-custom .nav-link:hover {
+        color: #0d6efd;
+        background: rgba(13,110,253,0.05);
+    }
+    
+    .nav-tabs-custom .nav-link.active {
+        background: white;
+        color: #0d6efd;
+        font-weight: 700;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.02);
+    }
+    
+    /* Card header */
+    .card-header-clean {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 1rem 1.25rem;
+        background: #ffffff;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Stat icon */
+    .stat-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f0ff;
+        color: #0d6efd;
+    }
+    
+    .si-indigo {
+        background: #f0f0ff;
+        color: #0d6efd;
+    }
+    
+    /* Clean table styling */
+    .table-clean {
+        border-collapse: collapse;
+    }
+    
+    .table-clean thead th {
+        background: #f8f9fa;
+        font-weight: 700;
+        font-size: 0.73rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem 1rem;
+    }
+    
+    .table-clean tbody td {
+        padding: 1rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Badge styles */
+    .badge-active {
+        background: #eaf9ef;
+        color: #16a34a;
+        font-size: 0.72rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    
+    .badge-inactive {
+        background: #fef3f2;
+        color: #dc2626;
+        font-size: 0.72rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    
+    /* Simple action buttons */
+    .table-actions .btn-sm-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+        background: white;
+        transition: none;
+    }
+    
+    .table-actions .btn-sm-icon:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table-actions .btn-outline-secondary:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .table-actions .btn-outline-warning:hover {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: white;
+    }
+    
+    .table-actions .btn-outline-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+    
+    .table-actions .btn-outline-success:hover {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: white;
+    }
+    
+    /* Modal styling */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.25rem;
+        background: #f8f9fa;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-header .modal-title {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.25rem;
+        background: #f8f9fa;
+        border-radius: 0 0 16px 16px;
+    }
+    
+    .modal .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 6px;
+    }
+    
+    .modal .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .modal .form-control:focus {
+        box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+        border-color: #0d6efd;
+    }
+    
+    /* Date column specific styling */
+    .date-cell {
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .table-mobile-hide {
+            display: none;
+        }
+        
+        .card-header-clean {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .nav-tabs-custom .nav-link {
+            padding: 0.5rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
+        .table-actions .btn-sm-icon {
+            width: 28px;
+            height: 28px;
+        }
+    }
+    
+    /* Simple scrollbar */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+        <h4>Configuration</h4>
+        <p class="text-muted small mb-0">Manage dropdown options used across the system</p>
+    </div>
+</div>
+
+<!-- Tab Nav -->
+<ul class="nav nav-tabs-custom">
+    @foreach (var (key, label, icon) in tabs)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(Model.ActiveTab == key ? "active" : "")"
+               href="@Url.Action("Index", new { tab = key })">
+                <i class="bi @icon me-1"></i>@label
+            </a>
+        </li>
+    }
+</ul>
+
+@foreach (var (key, label, icon) in tabs)
+{
+    if (Model.ActiveTab != key) continue;
+
+    var items = key switch {
+        "status"   => Model.Statuses,
+        "module"   => Model.Modules,
+        "product"  => Model.Products,
+        "category" => Model.Categories,
+        "city"     => Model.Cities,
+        _          => new()
+    };
+
+    <div class="card border-0 shadow-sm" style="border-radius:0 12px 12px 12px;">
+        <div class="card-header-clean">
+            <div class="d-flex align-items-center gap-2">
+                <div class="stat-icon si-indigo" style="width:34px;height:34px;border-radius:8px;">
+                    <i class="bi @icon" style="font-size:.85rem;"></i>
+                </div>
+                <h6 class="mb-0 fw-semibold">@label Management <span class="text-muted fw-normal" style="font-size:.78rem;">(@items.Count items)</span></h6>
+            </div>
+            <!-- Add Button triggers modal -->
+            <button class="btn btn-brand btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addModal"
+                    style="border-radius:8px;font-size:.81rem;">
+                <i class="bi bi-plus me-1"></i>Add @label
+            </button>
+        </div>
+
+        <div class="card-body p-0">
+            @if (items.Count == 0)
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;opacity:.3;"></i>
+                    <span style="font-size:.84rem;">No @label entries yet. Click "Add @label" to get started.</span>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clean mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>Name</th>
+                                <th style="width:100px;">Status</th>
+                                <th class="table-mobile-hide" style="width:95px;">Added</th>
+                                <th style="width:130px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int sr = 1; }
+                            @foreach (var item in items)
+                            {
+                                <tr>
+                                    <td class="text-muted fw-semibold">@sr</td>
+                                    <td class="fw-semibold" style="color:#1f3a4e;">@item.Name</td>
+                                    <td>
+                                        <span class="@(item.IsActive ? "badge-active" : "badge-inactive")">
+                                            @if (item.IsActive)
+                                            {
+                                                <i class="bi bi-check-circle me-1" style="font-size:.65rem;"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-x-circle me-1" style="font-size:.65rem;"></i>
+                                            }
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="table-mobile-hide">
+                                        <span class="date-cell text-muted">
+                                            <i class="bi bi-calendar3 me-1" style="font-size:.65rem;"></i>
+                                            @item.CreatedAt.ToString("dd MMM yyyy")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="table-actions d-flex gap-1 justify-content-end">
+                                            <!-- Edit -->
+                                            <a asp-controller="Configuration" asp-action="Edit"
+                                               asp-route-tab="@key" asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary"
+                                               title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <!-- Toggle -->
+                                            <form asp-action="Toggle" asp-route-tab="@key" asp-route-id="@item.Id"
+                                                  method="post" class="d-inline">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-sm-icon @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                        title="@(item.IsActive ? "Deactivate" : "Activate")">
+                                                    <i class="bi @(item.IsActive ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                                </button>
+                                            </form>
+                                            <!-- Delete -->
+                                            <form asp-action="Delete" asp-route-tab="@key" asp-route-id="@item.Id"
+                                                  method="post" class="d-inline"
+                                                  onsubmit="return confirm('⚠️ Delete \'@item.Name\' permanently? This action cannot be undone.')">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-sm-icon btn-outline-danger"
+                                                        title="Delete">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                sr++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+            <div class="modal-content">
+                <form asp-action="Add" method="post">
+                    <input type="hidden" name="tab" value="@key" />
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-600" style="font-weight:600;">
+                            <i class="bi @icon me-2" style="color:#0d6efd;"></i>Add New @label
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label">@label Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required
+                                   placeholder="Enter @label name" autofocus />
+                            <small class="text-muted" style="font-size:.7rem; display: block; margin-top: 6px;">This will appear in dropdowns across the system</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </button>
                         <button type="submit" class="btn btn-brand btn-sm px-4">
                             <i class="bi bi-check me-1"></i>Save
                         </button>

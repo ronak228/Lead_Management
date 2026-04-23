@@ -1,4 +1,4 @@
-@model ClientListViewModel
+@* @model ClientListViewModel
 @{ ViewData["Title"] = "Clients"; }
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -149,4 +149,383 @@
             </div>
         }
     </div>
+</div> *@
+
+@model ClientListViewModel
+@{ ViewData["Title"] = "Clients"; }
+
+<style>
+:root {
+    --brand: #4f46e5;
+    --brand-light: #e0e7ff;
+    --brand-dark: #3730a3;
+    --emerald: #059669;
+    --emerald-light: #d1fae5;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --rose: #e11d48;
+    --rose-light: #ffe4e6;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 20px rgba(0,0,0,.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.10);
+    --transition: .25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Reset ── */
+.cl-wrap { font-family: 'Inter', system-ui, sans-serif; color: var(--text); }
+.cl-wrap *, .cl-wrap *::before, .cl-wrap *::after { box-sizing: border-box; }
+
+/* ── Page Header ── */
+.cl-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+}
+.cl-header-left h1 {
+    font-size: 1.75rem; font-weight: 800; margin: 0;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cl-header-left p { margin: 4px 0 0; font-size: .88rem; color: var(--text-secondary); }
+
+.cl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px; border-radius: var(--radius-sm);
+    font-size: .84rem; font-weight: 600; border: none; cursor: pointer;
+    transition: all var(--transition); text-decoration: none;
+}
+.cl-btn-brand { background: var(--brand); color: #fff; }
+.cl-btn-brand:hover { background: var(--brand-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.cl-btn-outline {
+    background: transparent; color: var(--emerald); border: 1.5px solid var(--emerald);
+}
+.cl-btn-outline:hover { background: var(--emerald); color: #fff; }
+.cl-btn-ghost {
+    background: transparent; color: var(--text-secondary); border: 1.5px solid var(--border);
+}
+.cl-btn-ghost:hover { background: var(--surface-alt); color: var(--text); }
+
+/* ── Stats Strip ── */
+.cl-stats {
+    display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.cl-stat-card {
+    flex: 1; min-width: 140px; padding: 18px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); transition: all var(--transition);
+}
+.cl-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.cl-stat-num { font-size: 1.6rem; font-weight: 800; color: var(--brand); }
+.cl-stat-label { font-size: .78rem; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+
+/* ── Filter Bar ── */
+.cl-filter {
+    display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap;
+    padding: 20px 24px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+.cl-filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 180px; }
+.cl-filter-group label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+.cl-search-wrap {
+    display: flex; align-items: center; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-alt);
+    transition: border-color var(--transition);
+}
+.cl-search-wrap:focus-within { border-color: var(--brand); }
+.cl-search-wrap .search-icon { padding: 0 12px; color: var(--text-muted); display: flex; }
+.cl-search-wrap input {
+    border: none; outline: none; background: transparent;
+    padding: 9px 12px 9px 0; font-size: .85rem; width: 100%; color: var(--text);
+}
+.cl-filter select {
+    padding: 9px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-size: .85rem; color: var(--text); background: var(--surface-alt);
+    outline: none; cursor: pointer; transition: border-color var(--transition);
+}
+.cl-filter select:focus { border-color: var(--brand); }
+.cl-filter-actions { display: flex; align-items: flex-end; gap: 8px; }
+
+/* ── Table Card ── */
+.cl-table-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
+}
+.cl-table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+}
+.cl-table-header h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.cl-table-header .count {
+    font-size: .78rem; color: var(--text-muted); background: var(--surface-alt);
+    padding: 4px 12px; border-radius: 20px; font-weight: 600;
+}
+
+.cl-table { width: 100%; border-collapse: collapse; }
+.cl-table thead th {
+    padding: 12px 16px; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted);
+    background: var(--surface-alt); border-bottom: 2px solid var(--border);
+    text-align: left; white-space: nowrap;
+}
+.cl-table tbody tr {
+    transition: background var(--transition);
+    border-bottom: 1px solid var(--border);
+}
+.cl-table tbody tr:last-child { border-bottom: none; }
+.cl-table tbody tr:hover { background: var(--brand-light); }
+.cl-table tbody td { padding: 14px 16px; font-size: .84rem; vertical-align: middle; }
+
+/* ── Avatar ── */
+.cl-avatar {
+    display: inline-flex; align-items: center; gap: 10px;
+}
+.cl-avatar-circle {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; flex-shrink: 0;
+}
+.cl-avatar-name { font-weight: 600; color: var(--text); }
+
+/* ── Badges ── */
+.cl-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: .74rem; font-weight: 700;
+    letter-spacing: .3px;
+}
+.cl-badge-active { background: var(--emerald-light); color: var(--emerald); }
+.cl-badge-inactive { background: var(--rose-light); color: var(--rose); }
+
+.cl-ref {
+    font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+    color: var(--brand); font-weight: 600; background: var(--brand-light);
+    padding: 3px 10px; border-radius: 6px;
+}
+
+/* ── Action Buttons ── */
+.cl-actions { display: flex; gap: 6px; }
+.cl-act {
+    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--text-secondary); cursor: pointer;
+    transition: all var(--transition); font-size: .85rem; text-decoration: none;
+}
+.cl-act:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); transform: scale(1.08); }
+.cl-act-warn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-light); }
+.cl-act-danger:hover { border-color: var(--rose); color: var(--rose); background: var(--rose-light); }
+.cl-act-success:hover { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-light); }
+
+/* ── Empty State ── */
+.cl-empty {
+    text-align: center; padding: 60px 20px; color: var(--text-secondary);
+}
+.cl-empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: .4; }
+.cl-empty p { margin: 0; font-size: .9rem; }
+
+/* ── Animations ── */
+.cl-fade { opacity: 0; transform: translateY(12px); transition: opacity .4s ease, transform .4s ease; }
+.cl-fade.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Responsive ── */
+@@media (max-width: 768px) {
+    .cl-header { flex-direction: column; align-items: flex-start; }
+    .cl-stats { flex-direction: column; }
+    .cl-filter { flex-direction: column; }
+    .cl-filter-actions { flex-direction: row; width: 100%; }
+    .cl-filter-actions .cl-btn { flex: 1; justify-content: center; }
+    .cl-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .hide-mobile { display: none; }
+    .cl-table tbody td, .cl-table thead th { padding: 10px 12px; }
+}
+</style>
+
+<div class="cl-wrap">
+    <!-- Header -->
+    <div class="cl-header cl-fade">
+        <div class="cl-header-left">
+            <h1>👥 Clients</h1>
+            <p>Manage all client companies and their accounts</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a asp-action="Index" asp-route-search="@Model.Search" asp-route-filterStatus="@Model.FilterStatus"
+               asp-route-export="true" class="cl-btn cl-btn-outline">
+                <i class="bi bi-download"></i> Export
+            </a>
+        </div>
+    </div>
+
+    @{
+        int totalClients = Model.Clients.Count;
+        int activeCount = Model.Clients.Count(c => c.IsActive);
+        int inactiveCount = totalClients - activeCount;
+    }
+
+    <!-- Stats -->
+    <div class="cl-stats">
+        <div class="cl-stat-card cl-fade">
+            <div class="cl-stat-num">@totalClients</div>
+            <div class="cl-stat-label">Total Clients</div>
+        </div>
+        <div class="cl-stat-card cl-fade">
+            <div class="cl-stat-num" style="color:var(--emerald);">@activeCount</div>
+            <div class="cl-stat-label">Active</div>
+        </div>
+        <div class="cl-stat-card cl-fade">
+            <div class="cl-stat-num" style="color:var(--rose);">@inactiveCount</div>
+            <div class="cl-stat-label">Inactive</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="cl-filter cl-fade">
+        <div class="cl-filter-group" style="flex:2;">
+            <label>Search</label>
+            <div class="cl-search-wrap">
+                <span class="search-icon"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" value="@Model.Search"
+                       placeholder="Company, contact, phone, ref…" />
+            </div>
+        </div>
+        <div class="cl-filter-group" style="flex:1;">
+            <label>Status</label>
+            <select name="filterStatus">
+                <option value="">All</option>
+                @if (Model.FilterStatus == "active") {
+                    <option value="active" selected>Active</option>
+                } else {
+                    <option value="active">Active</option>
+                }
+                @if (Model.FilterStatus == "inactive") {
+                    <option value="inactive" selected>Inactive</option>
+                } else {
+                    <option value="inactive">Inactive</option>
+                }
+            </select>
+        </div>
+        <div class="cl-filter-actions">
+            <button type="submit" class="cl-btn cl-btn-brand">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <a asp-action="Index" class="cl-btn cl-btn-ghost">Reset</a>
+        </div>
+    </form>
+
+    <!-- Table -->
+    <div class="cl-table-card cl-fade">
+        <div class="cl-table-header">
+            <h3>All Clients</h3>
+            <span class="count">@totalClients records</span>
+        </div>
+
+        @if (Model.Clients.Count == 0)
+        {
+            <div class="cl-empty">
+                <div class="cl-empty-icon">📋</div>
+                <p>No clients found. New clients are created via registration.</p>
+            </div>
+        }
+        else
+        {
+            <div class="cl-table-wrap">
+                <table class="cl-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="hide-mobile">Ref</th>
+                            <th>Company</th>
+                            <th class="hide-mobile">Contact</th>
+                            <th>Phone</th>
+                            <th class="hide-mobile">Module</th>
+                            <th>Status</th>
+                            <th class="hide-mobile">Added</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var c in Model.Clients)
+                        {
+                            <tr class="cl-fade">
+                                <td style="color:var(--text-muted);font-weight:600;">@sr</td>
+                                <td class="hide-mobile">
+                                    <span class="cl-ref">@c.ClientRef</span>
+                                </td>
+                                <td>
+                                    <div class="cl-avatar">
+                                        <div class="cl-avatar-circle">
+                                            @(c.CompanyName.Length > 0 ? c.CompanyName[0].ToString().ToUpper() : "?")
+                                        </div>
+                                        <span class="cl-avatar-name">@c.CompanyName</span>
+                                    </div>
+                                </td>
+                                <td class="hide-mobile" style="color:var(--text-secondary);">@c.ContactPerson</td>
+                                <td style="font-size:.82rem;">@c.Phone</td>
+                                <td class="hide-mobile" style="color:var(--text-secondary);font-size:.82rem;">@(c.ModuleName ?? "—")</td>
+                                <td>
+                                    <span class="cl-badge @(c.IsActive ? "cl-badge-active" : "cl-badge-inactive")">
+                                        <i class="bi @(c.IsActive ? "bi-check-circle-fill" : "bi-x-circle-fill")" style="font-size:.7rem;"></i>
+                                        @(c.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td class="hide-mobile" style="color:var(--text-muted);font-size:.78rem;">
+                                    @c.CreatedAt.ToString("dd MMM yy")
+                                </td>
+                                <td>
+                                    <div class="cl-actions">
+                                        <a asp-action="Details" asp-route-id="@c.Id" class="cl-act" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (SessionHelper.IsClient(Context.Session))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@c.Id" class="cl-act" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                        @if (SessionHelper.IsAdmin(Context.Session) || SessionHelper.IsEmployee(Context.Session))
+                                        {
+                                            <a asp-controller="Payment" asp-action="Create" asp-route-clientId="@c.Id"
+                                               class="cl-act" title="Add Payment">
+                                                <i class="bi bi-cash-coin"></i>
+                                            </a>
+                                            <form asp-action="ToggleActive" asp-route-id="@c.Id" method="post" style="display:inline;">
+                                                <button type="submit"
+                                                        class="cl-act @(c.IsActive ? "cl-act-warn" : "cl-act-success")"
+                                                        title="@(c.IsActive ? "Deactivate" : "Activate")">
+                                                    <i class="bi @(c.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const els = document.querySelectorAll('.cl-fade');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((e, i) => {
+            if (e.isIntersecting) {
+                setTimeout(() => e.target.classList.add('visible'), i * 60);
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.05 });
+    els.forEach(el => observer.observe(el));
+});
+</script>

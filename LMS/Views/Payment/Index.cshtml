@@ -1,4 +1,4 @@
-@model PaymentListViewModel
+@* @model PaymentListViewModel
 @{ 
     ViewData["Title"] = "Payments";
     var payRole = Context.Session.GetString("UserRole") ?? "";
@@ -109,6 +109,373 @@
                                 <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p.Note ?? "—")</td>
                                 <td class="text-end">
                                     <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@p.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(p.ProofFile))
+                                        {
+                                            <a href="/uploads/payments/@p.ProofFile" target="_blank"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View Proof">
+                                                <i class="bi bi-paperclip"></i>
+                                            </a>
+                                        }
+                                        @if (SessionHelper.IsAdmin(Context.Session))
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Remove this payment?')">
+                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div> *@
+
+
+
+
+
+@model PaymentListViewModel
+@{ 
+    ViewData["Title"] = "Payments";
+    var payRole = Context.Session.GetString("UserRole") ?? "";
+}
+
+<style>
+    /* Clean professional styles - NO animations on table */
+    
+    /* Card enhancements */
+    .card {
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: none;
+        background: #ffffff;
+    }
+    
+    /* Button refinements */
+    .btn-brand {
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-brand:hover {
+        background-color: #0b5ed7;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-success {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1.5px solid #198754;
+        color: #198754;
+    }
+    
+    .btn-outline-success:hover {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    /* Filter form */
+    .filter-form .form-control,
+    .filter-form .input-group-text {
+        border-radius: 8px;
+    }
+    
+    .filter-form .form-control:focus {
+        box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+        border-color: #0d6efd;
+    }
+    
+    .filter-form .form-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+    
+    /* Clean table styling - NO animations */
+    .table-clean {
+        border-collapse: collapse;
+    }
+    
+    .table-clean thead th {
+        background: #f8f9fa;
+        font-weight: 700;
+        font-size: 0.73rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem 1rem;
+    }
+    
+    .table-clean tbody td {
+        padding: 1rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Simple badge for payment mode */
+    .payment-mode-badge {
+        background: #f0f0ff;
+        color: #0d6efd;
+        font-size: 0.72rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* Reference code styling */
+    .ref-code {
+        font-family: 'Courier New', monospace;
+        font-size: 0.73rem;
+        font-weight: 600;
+        color: #0d6efd;
+        background: #f1f3f5;
+        padding: 3px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    
+    /* Summary card */
+    .summary-card {
+        background: #ffffff;
+        border-left: 3px solid #0d6efd;
+        border-radius: 12px;
+    }
+    
+    .summary-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+    
+    .total-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #16a34a;
+    }
+    
+    /* Simple action buttons - NO hover animations */
+    .table-actions .btn-sm-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+        background: white;
+        transition: none;
+    }
+    
+    .table-actions .btn-sm-icon:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table-actions .btn-outline-secondary:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .table-actions .btn-outline-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    /* Input group */
+    .input-group .input-group-text {
+        background-color: white;
+        border-radius: 8px 0 0 8px;
+        border-right: none;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .table-mobile-hide {
+            display: none;
+        }
+        
+        .total-amount {
+            font-size: 1.2rem;
+        }
+        
+        .btn-brand, .btn-outline-success {
+            font-size: 0.75rem;
+            padding: 0.35rem 1rem;
+        }
+    }
+    
+    /* Simple scrollbar */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+        <h4>@(payRole == "Client" ? "My Payments" : $"Payments{(Model.CompanyName != null ? $" – {Model.CompanyName}" : "")}")</h4>
+        <p class="text-muted small mb-0">@(payRole == "Client" ? "Your payment history" : "All recorded income & payment receipts")</p>
+    </div>
+    @if (payRole != "Client")
+    {
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Export" asp-route-clientId="@Model.ClientId"
+           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+           class="btn btn-outline-success px-3" style="font-size:.83rem;">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export
+        </a>
+        <a asp-controller="Payment" asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
+            <i class="bi bi-plus me-1"></i>New Payment
+        </a>
+    </div>
+    }
+</div>
+
+<!-- Filters -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body py-3 px-4">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end filter-form">
+            <div style="min-width:200px;flex:1;">
+                <label class="form-label mb-1" style="font-size:.76rem;">Search Company</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-right:none;"><i class="bi bi-search text-muted" style="font-size:.8rem;"></i></span>
+                    <input type="text" name="search" value="@Model.Search" class="form-control" style="border-left:none;" placeholder="Company or ref…" />
+                </div>
+            </div>
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
+            </div>
+            <div style="min-width:110px;">
+                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
+                <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
+            </div>
+            @if (Model.ClientId.HasValue)
+            {
+                <input type="hidden" name="clientId" value="@Model.ClientId" />
+            }
+            <div class="d-flex gap-2 align-self-end">
+                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="card mb-3 shadow-sm summary-card">
+    <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="summary-label">TOTAL TRANSACTIONS</span>
+            <div class="mt-1 fw-semibold" style="font-size:.85rem;">@Model.Payments.Count records</div>
+        </div>
+        <div class="total-amount">
+            ₹@Model.TotalAmount.ToString("N0")
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        @if (Model.Payments.Count == 0)
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-cash-stack d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
+                <span style="font-size:.84rem;">No payments found.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clean mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:50px">#</th>
+                            <th class="table-mobile-hide">Ref</th>
+                            <th>Company</th>
+                            <th>Date</th>
+                            <th class="table-mobile-hide">Note</th>
+                            <th>Amount</th>
+                            <th>Mode</th>
+                            <th class="text-end" style="width:110px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var p in Model.Payments)
+                        {
+                            <tr>
+                                <td class="text-muted fw-semibold">@sr</td>
+                                <td class="table-mobile-hide">
+                                    <span class="ref-code">@(p.ClientRef ?? "—")</span>
+                                </td>
+                                <td class="fw-semibold">@(p.CompanyName ?? "—")</td>
+                                <td style="font-size:.8rem;">
+                                    <i class="bi bi-calendar3 me-1" style="font-size:.7rem;"></i>
+                                    @p.PaymentDate.ToString("dd MMM yyyy")
+                                </td>
+                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="@p.Note">
+                                    @if (!string.IsNullOrEmpty(p.Note))
+                                    {
+                                        <i class="bi bi-chat-text me-1"></i>
+                                    }
+                                    @(p.Note ?? "—")
+                                </td>
+                                <td style="font-weight:700;color:#16a34a;">₹@p.Amount.ToString("N0")</td>
+                                <td>
+                                    <span class="payment-mode-badge">
+                                        <i class="bi bi-wallet2 me-1" style="font-size:.7rem;"></i>
+                                        @p.PaymentMode
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="table-actions d-flex gap-1 justify-content-end">
                                         <a asp-action="Details" asp-route-id="@p.Id"
                                            class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
                                             <i class="bi bi-eye"></i>

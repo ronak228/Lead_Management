@@ -1,4 +1,4 @@
-﻿@{
+﻿@* @{
     ViewData["Title"] = "Dashboard";
     var userName       = ViewBag.UserName as string ?? "User";
     var userRole       = ViewBag.UserRole as string ?? "User";
@@ -61,7 +61,7 @@
                             {
                                 <tr>
                                     <td style="font-size:.8rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM yyyy")</td>
-                                    <td style="font-weight:700;color:#16a34a;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
+                                    <td style="font-weight:700;color:#16a34a;" title="@CurrencyFormatHelper.GetFullValue(Convert.ToDecimal(p["amount"]))">@CurrencyFormatHelper.Format(Convert.ToDecimal(p["amount"]))</td>
                                     <td style="font-size:.8rem;">@p["payment_mode"]</td>
                                     <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p["note"]?.ToString() ?? "—")</td>
                                 </tr>
@@ -272,7 +272,7 @@ else
                                                 <div class="fw-500">@p["company_name"]</div>
                                                 <div style="font-size:.71rem;color:var(--brand);font-weight:600;font-family:monospace;">@p["client_ref"]</div>
                                             </td>
-                                            <td style="font-weight:700;color:#16a34a;font-size:.88rem;">₹@Convert.ToDecimal(p["amount"]).ToString("N0")</td>
+                                            <td style="font-weight:700;color:#16a34a;font-size:.88rem;" title="@CurrencyFormatHelper.GetFullValue(Convert.ToDecimal(p["amount"]))">@CurrencyFormatHelper.Format(Convert.ToDecimal(p["amount"]))</td>
                                             <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM")</td>
                                         </tr>
                                     }
@@ -303,4 +303,499 @@ else
     .quick-link-card { margin-bottom: 0; }
     .row.g-2 { --bs-gutter-x: 1rem; }
 }
+</style> *@
+
+
+
+@using LeadManagementSystem.Helpers;
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var userName       = ViewBag.UserName as string ?? "User";
+    var userRole       = ViewBag.UserRole as string ?? "User";
+    var recent         = ViewBag.RecentInquiries as List<Dictionary<string, object>> ?? new();
+    var recentPayments = ViewBag.RecentPayments  as List<Dictionary<string, object>> ?? new();
+    var isClient       = userRole == "Client";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        --brand: #6c5ce7;
+        --brand-soft: #efeaff;
+        --ink: #0f172a;
+        --ink-2: #475569;
+        --muted: #64748b;
+        --bg: #f5f7fb;
+        --card: #ffffff;
+        --border: #e6e8ef;
+        --success: #16a34a;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --shadow-sm: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.05);
+        --shadow-md: 0 4px 14px rgba(15,23,42,.06);
+        --radius: 14px;
+    }
+
+    .dash-wrap { font-family: 'Inter', sans-serif; color: var(--ink); padding: 6px 2px 24px; }
+
+    /* Header */
+    .dash-header { margin-bottom: 18px; }
+    .dash-header h4 { font-weight: 700; margin: 0 0 4px; font-size: 1.4rem; letter-spacing: -.01em; }
+    .dash-header p { color: var(--muted); margin: 0; font-size: .9rem; }
+
+    /* Stat grid */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+    .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: var(--shadow-sm);
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-icon {
+        width: 46px; height: 46px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.15rem; flex-shrink: 0;
+    }
+    .ic-brand   { background: var(--brand-soft); color: var(--brand); }
+    .ic-success { background: #dcfce7; color: var(--success); }
+    .ic-warn    { background: #fef3c7; color: #b45309; }
+    .ic-info    { background: #dbeafe; color: var(--info); }
+    .ic-danger  { background: #fee2e2; color: var(--danger); }
+    .stat-body { min-width: 0; flex: 1; }
+    .stat-value { font-size: 1.3rem; font-weight: 700; line-height: 1.1; color: var(--ink); word-break: break-word; }
+    .stat-label { font-size: .78rem; color: var(--muted); margin-top: 3px; font-weight: 500; }
+
+    /* Quick action tiles */
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .quick-link-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        text-decoration: none;
+        color: inherit;
+        box-shadow: var(--shadow-sm);
+        transition: all .18s ease;
+        display: block;
+    }
+    .quick-link-card:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: var(--shadow-md); color: inherit; }
+    .quick-link-card .card-body {
+        padding: 14px 16px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .quick-link-card-title { font-weight: 600; font-size: .9rem; }
+    .quick-link-card-sub { font-size: .72rem; color: var(--muted); }
+    .chev { margin-left: auto; color: var(--muted); }
+
+    /* Section card */
+    .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .panel-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .panel-title { font-weight: 600; font-size: .98rem; margin: 0; }
+    .panel-link { color: var(--brand); font-size: .8rem; font-weight: 600; text-decoration: none; }
+    .panel-link:hover { text-decoration: underline; }
+    .panel-body { padding: 4px 0 0; }
+
+    /* Tables */
+    .table-scroll { width: 100%; overflow-x: auto; }
+    .dash-table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    .dash-table thead th {
+        text-align: left;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted);
+        font-weight: 600;
+        background: #fafbff;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .dash-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f3f9;
+        vertical-align: middle;
+    }
+    .dash-table tbody tr:last-child td { border-bottom: none; }
+    .dash-table tbody tr:hover { background: #fafbff; }
+    .fw-500 { font-weight: 600; }
+
+    .badge-soft {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        padding: 28px 16px;
+        text-align: center;
+        color: var(--muted);
+        font-size: .88rem;
+    }
+    .empty-state i { font-size: 1.6rem; display: block; margin-bottom: 6px; opacity: .6; }
+    .empty-state a { color: var(--brand); font-weight: 600; text-decoration: none; }
+
+    /* Two-column layout */
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    @@media (min-width: 992px) {
+        .two-col { grid-template-columns: 1.4fr 1fr; }
+    }
+
+    /* Mobile */
+    @@media (max-width: 575.98px) {
+        .dash-header h4 { font-size: 1.2rem; }
+        .dash-header p { font-size: .82rem; }
+        .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-card { padding: 12px; gap: 10px; }
+        .stat-icon { width: 38px; height: 38px; font-size: 1rem; }
+        .stat-value { font-size: 1.05rem; }
+        .stat-label { font-size: .7rem; }
+        .quick-grid { grid-template-columns: 1fr; }
+        .panel-head { padding: 12px 14px; }
+        .dash-table thead th, .dash-table tbody td { padding: 10px 12px; }
+        .table-mobile-hide { display: none !important; }
+    }
+    @@media (max-width: 380px) {
+        .stat-grid { grid-template-columns: 1fr; }
+    }
 </style>
+
+<div class="dash-wrap">
+
+    <div class="dash-header">
+        <h4>Good day, @userName</h4>
+        <p>Here's a snapshot of your hotel lead pipeline</p>
+    </div>
+
+    @if (isClient)
+    {
+        <!-- ============ CLIENT STATS ============ -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon ic-brand"><i class="bi bi-building"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.CompanyName ?? "—")</div>
+                    <div class="stat-label">@(ViewBag.ClientRef ?? "")</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ic-success"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value" title="@CurrencyFormatHelper.GetFullValue((decimal?)ViewBag.TotalPaid)">@CurrencyFormatHelper.Format((decimal?)ViewBag.TotalPaid)</div>
+                    <div class="stat-label">Amount Paid</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ic-info"><i class="bi bi-chat-left-dots"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.ClientInquiries ?? 0)</div>
+                    <div class="stat-label">Total Inquiries</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ic-warn"><i class="bi bi-receipt"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.PaymentCount ?? 0)</div>
+                    <div class="stat-label">Payments</div>
+                </div>
+            </div>
+        </div>
+
+        @if (recentPayments.Any())
+        {
+            <div class="panel">
+                <div class="panel-head"><h6 class="panel-title">My Payment History</h6></div>
+                <div class="panel-body">
+                    <div class="table-scroll">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Mode</th>
+                                    <th class="table-mobile-hide">Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in recentPayments)
+                                {
+                                    <tr>
+                                        <td style="font-size:.82rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM yyyy")</td>
+                                        <td style="font-weight:700;color:var(--success);" title="@CurrencyFormatHelper.GetFullValue(Convert.ToDecimal(p["amount"]))">@CurrencyFormatHelper.Format(Convert.ToDecimal(p["amount"]))</td>
+                                        <td style="font-size:.82rem;">@p["payment_mode"]</td>
+                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p["note"]?.ToString() ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (ViewBag.RecentInquiries is List<Dictionary<string, object>> recentInq && recentInq.Any())
+        {
+            <div class="panel">
+                <div class="panel-head"><h6 class="panel-title">My Recent Inquiries</h6></div>
+                <div class="panel-body">
+                    <div class="table-scroll">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>Hotel Name</th>
+                                    <th>Status</th>
+                                    <th class="table-mobile-hide">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var inq in recentInq)
+                                {
+                                    var statusName = inq["status"]?.ToString() ?? "Unknown";
+                                    var statusColor = statusName.ToLower() switch
+                                    {
+                                        "received" => "#3b82f6",
+                                        "in progress" => "#f59e0b",
+                                        "completed" => "#10b981",
+                                        "closed" => "#6b7280",
+                                        _ => "#6b7280"
+                                    };
+                                    <tr>
+                                        <td style="font-size:.9rem;"><strong>@(inq["hotel_name"]?.ToString() ?? "—")</strong></td>
+                                        <td>
+                                            <span class="badge-soft" style="background-color:@(statusColor)22;color:@statusColor;">@statusName</span>
+                                        </td>
+                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@Convert.ToDateTime(inq["created_at"]).ToString("dd MMM yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- ============ ADMIN / STAFF STATS ============ -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon ic-info"><i class="bi bi-chat-left-dots"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.TotalInquiries ?? 0)</div>
+                    <div class="stat-label">Total Inquiries</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ic-brand"><i class="bi bi-people"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.TotalClients ?? 0)</div>
+                    <div class="stat-label">Total Clients</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ic-warn"><i class="bi bi-calendar-event"></i></div>
+                <div class="stat-body">
+                    <div class="stat-value">@(ViewBag.FollowupToday ?? 0)</div>
+                    <div class="stat-label">Follow-ups Today</div>
+                </div>
+            </div>
+            @if (userRole == "Admin")
+            {
+                <div class="stat-card">
+                    <div class="stat-icon ic-success"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" title="@CurrencyFormatHelper.GetFullValue((decimal?)ViewBag.TotalIncome)">@CurrencyFormatHelper.Format((decimal?)ViewBag.TotalIncome)</div>
+                        <div class="stat-label">Total Income</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon ic-danger"><i class="bi bi-graph-down-arrow"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" title="@CurrencyFormatHelper.GetFullValue((decimal?)ViewBag.TotalExpenses)">@CurrencyFormatHelper.Format((decimal?)ViewBag.TotalExpenses)</div>
+                        <div class="stat-label">Total Expenses</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (userRole == "Admin")
+        {
+            <div class="quick-grid">
+                <a class="quick-link-card" asp-controller="Payment" asp-action="Create">
+                    <div class="card-body">
+                        <div class="stat-icon ic-success"><i class="bi bi-plus-circle"></i></div>
+                        <div>
+                            <div class="quick-link-card-title">Add Payment</div>
+                            <div class="quick-link-card-sub">Record a new payment</div>
+                        </div>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </div>
+                </a>
+                <a class="quick-link-card" asp-controller="Expense" asp-action="Create">
+                    <div class="card-body">
+                        <div class="stat-icon ic-danger"><i class="bi bi-dash-circle"></i></div>
+                        <div>
+                            <div class="quick-link-card-title">Add Expense</div>
+                            <div class="quick-link-card-sub">Log an expense</div>
+                        </div>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </div>
+                </a>
+                <a class="quick-link-card" asp-controller="Configuration" asp-action="Index">
+                    <div class="card-body">
+                        <div class="stat-icon ic-brand"><i class="bi bi-sliders"></i></div>
+                        <div>
+                            <div class="quick-link-card-title">Configuration</div>
+                            <div class="quick-link-card-sub">Manage system settings</div>
+                        </div>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </div>
+                </a>
+            </div>
+        }
+
+        <div class="two-col">
+            <!-- Recent Inquiries -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h6 class="panel-title">Recent Inquiries</h6>
+                    <a class="panel-link" asp-controller="Inquiry" asp-action="Index">View all →</a>
+                </div>
+                <div class="panel-body">
+                    @if (!recent.Any())
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            No inquiries yet. <a asp-controller="Inquiries" asp-action="Create">Create one →</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hotel</th>
+                                        <th>Client</th>
+                                        <th class="table-mobile-hide">Ref</th>
+                                        <th>Status</th>
+                                        <th class="table-mobile-hide">Follow-up</th>
+                                        <th class="table-mobile-hide">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in recent)
+                                    {
+                                        <tr>
+                                            <td class="fw-500">@r["hotel_name"]</td>
+                                            <td style="font-size:.82rem;">@r["client_name"]</td>
+                                            <td class="table-mobile-hide" style="font-size:.72rem;color:var(--brand);font-weight:600;font-family:monospace;">
+                                                @(r["client_ref"] is not null and not DBNull ? r["client_ref"] : "—")
+                                            </td>
+                                            <td>
+                                                @if (r["status_name"] != null)
+                                                {
+                                                    <span class="badge-soft" style="background:#fef9ec;color:#92400e;">@r["status_name"]</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted" style="font-size:.8rem;">—</span>
+                                                }
+                                            </td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">
+                                                @(r["followup_date"] is not null and not DBNull ? Convert.ToDateTime(r["followup_date"]).ToString("dd MMM") : "—")
+                                            </td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(r["created_at"]).ToString("dd MMM")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="panel">
+                <div class="panel-head">
+                    <h6 class="panel-title">Recent Payments</h6>
+                    <a class="panel-link" asp-controller="Payment" asp-action="Index">View all →</a>
+                </div>
+                <div class="panel-body">
+                    @if (!recentPayments.Any())
+                    {
+                        <div class="empty-state">
+                            <i class="bi bi-wallet2"></i>
+                            No payments yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Amount</th>
+                                        <th class="table-mobile-hide">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in recentPayments)
+                                    {
+                                        <tr>
+                                            <td style="font-size:.82rem;">
+                                                <div class="fw-500">@p["company_name"]</div>
+                                                <div style="font-size:.71rem;color:var(--brand);font-weight:600;font-family:monospace;">@p["client_ref"]</div>
+                                            </td>
+                                            <td style="font-weight:700;color:var(--success);font-size:.88rem;" title="@CurrencyFormatHelper.GetFullValue(Convert.ToDecimal(p["amount"]))">@CurrencyFormatHelper.Format(Convert.ToDecimal(p["amount"]))</td>
+                                            <td class="table-mobile-hide text-muted" style="font-size:.75rem;">@Convert.ToDateTime(p["payment_date"]).ToString("dd MMM")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+

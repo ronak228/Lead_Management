@@ -1,4 +1,4 @@
-@model InquiryListViewModel
+@* @model InquiryListViewModel
 @{
     ViewData["Title"] = "Inquiries";
     var inqRole = Context.Session.GetString("UserRole") ?? "";
@@ -237,6 +237,422 @@
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         @if (isClient /*&& inq.StatusName == "Received"*/)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@inq.Id"
+                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            sr++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div> *@
+
+
+@model InquiryListViewModel
+@{
+    ViewData["Title"] = "Inquiries";
+    var inqRole = Context.Session.GetString("UserRole") ?? "";
+    bool isClient = inqRole == "Client";
+}
+
+<style>
+    :root {
+        --brand: #6c5ce7;
+        --brand-dark: #5a4bd1;
+        --brand-soft: #f0eeff;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --radius: 12px;
+        --shadow-sm: 0 1px 2px rgba(16,24,40,.05);
+        --shadow-md: 0 4px 14px rgba(16,24,40,.06);
+    }
+
+    body { background: var(--bg); font-family: 'Inter', system-ui, sans-serif; color: var(--ink); }
+
+    /* Page header */
+    .page-head {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .page-head h4 { font-size: 1.25rem; font-weight: 700; margin: 0 0 2px; }
+    .page-head .subtitle { color: var(--muted); font-size: .82rem; margin: 0; }
+    .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn-brand {
+        background: var(--brand); color: #fff; border: none; border-radius: 8px;
+        padding: 8px 14px; font-size: .83rem; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 6px; transition: background .2s;
+    }
+    .btn-brand:hover { background: var(--brand-dark); color: #fff; }
+
+    /* Card / panel */
+    .panel {
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: var(--radius); box-shadow: var(--shadow-sm);
+        margin-bottom: 16px; overflow: hidden;
+    }
+    .panel-head {
+        padding: 14px 18px; border-bottom: 1px solid var(--line);
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        flex-wrap: wrap;
+    }
+    .panel-head h6 { margin: 0; font-size: .92rem; font-weight: 700; }
+    .panel-body { padding: 16px 18px; }
+
+    /* Filter grid - fully responsive */
+    .filter-grid {
+        display: grid; gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    .filter-grid label {
+        display: block; font-size: .72rem; font-weight: 600;
+        color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
+        margin-bottom: 4px;
+    }
+    .filter-grid .form-control,
+    .filter-grid .form-select {
+        height: 38px; font-size: .85rem; border-radius: 8px;
+        border: 1px solid var(--line);
+    }
+    .filter-grid .form-control:focus,
+    .filter-grid .form-select:focus {
+        border-color: var(--brand); box-shadow: 0 0 0 3px rgba(108,92,231,.12);
+    }
+    .input-group-text {
+        background: #fff; border: 1px solid var(--line); border-right: none;
+        border-radius: 8px 0 0 8px; color: var(--muted);
+    }
+    .input-group .form-control { border-radius: 0 8px 8px 0; }
+
+    .filter-actions {
+        display: flex; gap: 8px; align-items: flex-end;
+    }
+    .filter-actions .btn { height: 38px; font-size: .82rem; flex: 1; }
+
+    /* Table */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .dash-table {
+        width: 100%; border-collapse: collapse; font-size: .85rem;
+    }
+    .dash-table thead th {
+        background: #fafbfc; color: var(--muted); font-weight: 600;
+        font-size: .72rem; text-transform: uppercase; letter-spacing: .03em;
+        padding: 10px 12px; border-bottom: 1px solid var(--line);
+        text-align: left; white-space: nowrap;
+    }
+    .dash-table tbody td {
+        padding: 12px; border-bottom: 1px solid #f1f3f5; vertical-align: middle;
+    }
+    .dash-table tbody tr:hover { background: #fafbfc; }
+    .dash-table tbody tr:last-child td { border-bottom: none; }
+    .fw-500 { font-weight: 600; }
+
+    /* Pills / badges */
+    .pill {
+        display: inline-block; font-size: .7rem; font-weight: 600;
+        padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+    }
+    .pill-brand { background: var(--brand-soft); color: var(--brand); }
+    .pill-status { background: #fef9ec; color: #92400e; }
+
+    /* Action buttons */
+    .row-actions { display: inline-flex; gap: 6px; }
+    .btn-sm-icon {
+        width: 32px; height: 32px; padding: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 6px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center; padding: 40px 16px; color: var(--muted);
+    }
+    .empty-state i { font-size: 2.2rem; color: #cbd5e1; display: block; margin-bottom: 8px; }
+
+    /* Records count */
+    .records-count { color: var(--muted); font-weight: 400; font-size: .76rem; }
+
+    /* ============ MOBILE ============ */
+    @@media (max-width: 767.98px) {
+        .page-head { margin-bottom: 12px; }
+        .page-head h4 { font-size: 1.1rem; }
+        .page-actions { width: 100%; }
+        .page-actions .btn, .page-actions .btn-brand { flex: 1; justify-content: center; }
+        .panel-body { padding: 12px; }
+        .panel-head { padding: 12px 14px; }
+        .filter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .filter-actions { grid-column: 1 / -1; }
+        .table-mobile-hide { display: none !important; }
+        .dash-table thead th, .dash-table tbody td { padding: 10px 8px; font-size: .8rem; }
+        .btn-sm-icon { width: 30px; height: 30px; }
+    }
+
+    @@media (max-width: 380px) {
+        .filter-grid { grid-template-columns: 1fr; }
+        .page-head h4 { font-size: 1rem; }
+        .dash-table thead th, .dash-table tbody td { padding: 8px 6px; font-size: .75rem; }
+    }
+
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        .filter-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+</style>
+
+<div class="container-fluid px-2 px-md-3 py-3">
+
+    <!-- HEADER -->
+    <div class="page-head">
+        <div>
+            <h4>@(isClient ? "My Inquiries" : "Inquiries")</h4>
+            <p class="subtitle">@(isClient ? "Your submitted service inquiries" : "Manage all hotel lead inquiries")</p>
+        </div>
+        <div class="page-actions">
+            @if (!isClient)
+            {
+                <a asp-action="Export"
+                   asp-route-search="@Model.Search"
+                   asp-route-filterStatus="@Model.FilterStatus"
+                   asp-route-filterModule="@Model.FilterModule"
+                   asp-route-filterPayment="@Model.FilterPayment"
+                   asp-route-filterCity="@Model.FilterCity"
+                   asp-route-dateFrom="@Model.DateFrom"
+                   asp-route-dateTo="@Model.DateTo"
+                   class="btn btn-outline-success" style="font-size:.83rem;border-radius:8px;">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Export
+                </a>
+            }
+            @if (isClient)
+            {
+                <a asp-action="Create" class="btn-brand">
+                    <i class="bi bi-plus-lg"></i> New Inquiry
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="panel">
+        <div class="panel-body">
+            <form method="get" asp-action="Index">
+                <div class="filter-grid">
+                    <div>
+                        <label>Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" value="@Model.Search"
+                                   class="form-control" placeholder="Hotel, client, number…" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label>Status</label>
+                        <select name="filterStatus" class="form-select">
+                            <option value="">All Statuses</option>
+                            @foreach (var s in Model.Statuses)
+                            {
+                                if (Model.FilterStatus == s.Id) {
+                                    <option value="@s.Id" selected>@s.Name</option>
+                                } else {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Module</label>
+                        <select name="filterModule" class="form-select">
+                            <option value="">All Modules</option>
+                            @foreach (var m in Model.Modules)
+                            {
+                                if (Model.FilterModule == m.Id) {
+                                    <option value="@m.Id" selected>@m.Name</option>
+                                } else {
+                                    <option value="@m.Id">@m.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    @if (!isClient)
+                    {
+                        <div>
+                            <label>City</label>
+                            <select name="filterCity" class="form-select">
+                                <option value="">All Cities</option>
+                                @foreach (var ci in Model.Cities)
+                                {
+                                    if (Model.FilterCity == ci.Id.ToString()) {
+                                        <option value="@ci.Id" selected>@ci.Name</option>
+                                    } else {
+                                        <option value="@ci.Id">@ci.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <div>
+                        <label>Payment</label>
+                        <select name="filterPayment" class="form-select">
+                            <option value="">All</option>
+                            @if (Model.FilterPayment == "yes") {
+                                <option value="yes" selected>Received</option>
+                            } else {
+                                <option value="yes">Received</option>
+                            }
+                            @if (Model.FilterPayment == "no") {
+                                <option value="no" selected>Pending</option>
+                            } else {
+                                <option value="no">Pending</option>
+                            }
+                        </select>
+                    </div>
+
+                    @if (!isClient)
+                    {
+                        <div>
+                            <label>From Date</label>
+                            <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
+                        </div>
+                        <div>
+                            <label>To Date</label>
+                            <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
+                        </div>
+                    }
+
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-brand" style="border-radius:8px;">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:8px;">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LIST -->
+    <div class="panel">
+        <div class="panel-head">
+            <h6>
+                @(isClient ? "My Inquiries" : "All Inquiries")
+                <span class="records-count">(@Model.Inquiries.Count records)</span>
+            </h6>
+        </div>
+
+        @if (Model.Inquiries.Count == 0)
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <div>No inquiries found.
+                    <a asp-action="Create" style="color:var(--brand);font-weight:600;">Add one →</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Hotel Name</th>
+                            @if (!isClient) { <th class="table-mobile-hide">Client</th> }
+                            @if (!isClient) { <th class="table-mobile-hide">Client ID</th> }
+                            <th class="table-mobile-hide">Contact</th>
+                            <th class="table-mobile-hide">City</th>
+                            <th class="table-mobile-hide">Module</th>
+                            <th>Status</th>
+                            @if (!isClient) { <th class="table-mobile-hide">Follow-up</th> }
+                            <th class="table-mobile-hide">Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int sr = 1; }
+                        @foreach (var inq in Model.Inquiries)
+                        {
+                            <tr>
+                                <td class="text-muted">@sr</td>
+                                <td class="fw-500">@inq.HotelName</td>
+
+                                @if (!isClient)
+                                {
+                                    <td class="table-mobile-hide">@inq.ClientName</td>
+                                    <td class="table-mobile-hide" style="font-size:.72rem;">
+                                        @if (inq.ClientId.HasValue)
+                                        {
+                                            <a asp-controller="Client" asp-action="Details" asp-route-id="@inq.ClientId"
+                                               style="color:var(--brand);font-weight:600;text-decoration:none;font-family:monospace;">
+                                                @(string.IsNullOrEmpty(inq.ClientRef) ? $"#{inq.ClientId}" : inq.ClientRef)
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                }
+
+                                <td class="table-mobile-hide" style="font-size:.8rem;">@inq.ClientNumber</td>
+                                <td class="table-mobile-hide" style="font-size:.8rem;">@(inq.CityName ?? "—")</td>
+                                <td class="table-mobile-hide">
+                                    @if (inq.ModuleName != null)
+                                    {
+                                        <span class="pill pill-brand">@inq.ModuleName</span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td>
+                                    @if (inq.StatusName != null)
+                                    {
+                                        <span class="pill pill-status">@inq.StatusName</span>
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+
+                                @if (!isClient)
+                                {
+                                    <td class="table-mobile-hide" style="font-size:.75rem;">
+                                        @if (inq.FollowupDate.HasValue)
+                                        {
+                                            var isOverdue = inq.FollowupDate.Value.Date < DateTime.Today;
+                                            var isToday   = inq.FollowupDate.Value.Date == DateTime.Today;
+                                            <span style="color:@(isOverdue?"#dc2626":isToday?"#d97706":"inherit");font-weight:@(isToday||isOverdue?"600":"400");">
+                                                @inq.FollowupDate.Value.ToString("dd MMM yy")
+                                                @if (isOverdue) { <i class="bi bi-exclamation-circle ms-1 text-danger"></i> }
+                                                @if (isToday)   { <i class="bi bi-bell ms-1 text-warning"></i> }
+                                            </span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                }
+
+                                <td class="text-muted table-mobile-hide" style="font-size:.75rem;">
+                                    @inq.CreatedAt.ToString("dd MMM yy")
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="row-actions">
+                                        <a asp-action="Details" asp-route-id="@inq.Id"
+                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (isClient)
                                         {
                                             <a asp-action="Edit" asp-route-id="@inq.Id"
                                                class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">

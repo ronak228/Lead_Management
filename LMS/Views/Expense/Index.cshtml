@@ -1,10 +1,217 @@
 @model ExpenseListViewModel
 @{ ViewData["Title"] = "Expenses"; }
 
+<style>
+    /* Clean professional styles */
+    
+    /* Card enhancements */
+    .card {
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.05);
+        background: #ffffff;
+    }
+    
+    /* Button refinements */
+    .btn-brand {
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-brand:hover {
+        background-color: #0b5ed7;
+        transform: translateY(-1px);
+    }
+    
+    .btn-outline-success {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: 1.5px solid #198754;
+        color: #198754;
+    }
+    
+    .btn-outline-success:hover {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    /* Filter form */
+    .filter-form .form-control,
+    .filter-form .form-select,
+    .filter-form .input-group-text {
+        border-radius: 8px;
+    }
+    
+    .filter-form .form-control:focus,
+    .filter-form .form-select:focus {
+        box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
+        border-color: #0d6efd;
+    }
+    
+    .filter-form .form-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+    
+    /* Clean table styling */
+    .table-clean {
+        border-collapse: collapse;
+    }
+    
+    .table-clean thead th {
+        background: #f8f9fa;
+        font-weight: 700;
+        font-size: 0.73rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem 1rem;
+    }
+    
+    .table-clean tbody td {
+        padding: 1rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Category badge - matching payment mode badge style */
+    .category-badge {
+        background: #f0f0ff;
+        color: #0d6efd;
+        font-size: 0.72rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* Payment mode badge - SAME as payments page */
+    .payment-mode-badge {
+        background: #f0f0ff;
+        color: #0d6efd;
+        font-size: 0.72rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* Summary card */
+    .summary-card {
+        background: #ffffff;
+        border-left: 3px solid #dc2626;
+        border-radius: 12px;
+    }
+    
+    .summary-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+    
+    .total-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #dc2626;
+    }
+    
+    /* Simple action buttons */
+    .table-actions .btn-sm-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+        background: white;
+        transition: none;
+    }
+    
+    .table-actions .btn-sm-icon:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table-actions .btn-outline-secondary:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .table-actions .btn-outline-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+    
+    /* Input group */
+    .input-group .input-group-text {
+        background-color: white;
+        border-radius: 8px 0 0 8px;
+        border-right: none;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .table-mobile-hide {
+            display: none;
+        }
+        
+        .total-amount {
+            font-size: 1.2rem;
+        }
+        
+        .btn-brand, .btn-outline-success {
+            font-size: 0.75rem;
+            padding: 0.35rem 1rem;
+        }
+    }
+    
+    /* Simple scrollbar */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
+</style>
+
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
     <div>
         <h4>Expenses</h4>
-        <p>Track all operational expenses</p>
+        <p class="text-muted small mb-0">Track all operational expenses</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Export" asp-route-categoryId="@Model.CategoryId"
@@ -19,9 +226,9 @@
 </div>
 
 <!-- Filters -->
-<div class="card mb-4">
+<div class="card mb-4 shadow-sm">
     <div class="card-body py-3 px-4">
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end filter-form">
             <div style="min-width:200px;flex:1;">
                 <label class="form-label mb-1" style="font-size:.76rem;">Search</label>
                 <div class="input-group">
@@ -60,21 +267,26 @@
 </div>
 
 <!-- Summary -->
-<div class="card mb-3">
+<div class="card mb-3 shadow-sm summary-card">
     <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span style="font-size:.75rem;color:var(--text-muted);">Total Expenses (@Model.Expenses.Count records)</span>
-        <div style="font-size:1.1rem;font-weight:700;color:#dc2626;">₹@Model.TotalAmount.ToString("N0")</div>
+        <div>
+            <span class="summary-label">TOTAL EXPENSES</span>
+            <div class="mt-1 fw-semibold" style="font-size:.85rem;">@Model.Expenses.Count records</div>
+        </div>
+        <div class="total-amount">
+            ₹@Model.TotalAmount.ToString("N0")
+        </div>
     </div>
 </div>
 
 <!-- Table -->
-<div class="card">
+<div class="card shadow-sm">
     <div class="card-body p-0">
         @if (Model.Expenses.Count == 0)
         {
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-receipt d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
-                <span style="font-size:.84rem;">No expenses found. <a asp-action="Create" style="color:var(--brand);">Add one</a></span>
+                <span style="font-size:.84rem;">No expenses found. <a asp-action="Create" style="color:#0d6efd;text-decoration:none;font-weight:500;">Add one</a></span>
             </div>
         }
         else
@@ -83,14 +295,14 @@
                 <table class="table table-clean mb-0">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th style="width:50px">#</th>
                             <th>Date</th>
                             <th class="table-mobile-hide">Category</th>
                             <th class="table-mobile-hide">From</th>
                             <th class="table-mobile-hide">To</th>
                             <th>Amount</th>
-                            <th class="table-mobile-hide">Mode</th>
-                            <th class="text-end">Actions</th>
+                            <th>Mode</th>
+                            <th class="text-end" style="width:110px">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,21 +310,46 @@
                         @foreach (var e in Model.Expenses)
                         {
                             <tr>
-                                <td class="text-muted">@sr</td>
-                                <td style="font-size:.8rem;">@e.ExpenseDate.ToString("dd MMM yyyy")</td>
-                                <td class="table-mobile-hide" style="font-size:.8rem;">
+                                <td class="text-muted fw-semibold">@sr</td>
+                                <td style="font-size:.8rem;">
+                                    <i class="bi bi-calendar3 me-1" style="font-size:.7rem;"></i>
+                                    @e.ExpenseDate.ToString("dd MMM yyyy")
+                                </td>
+                                <td class="table-mobile-hide">
                                     @if (!string.IsNullOrEmpty(e.CategoryName))
                                     {
-                                        <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@e.CategoryName</span>
+                                        <span class="category-badge">
+                                            <i class="bi bi-tag me-1" style="font-size:.7rem;"></i>
+                                            @e.CategoryName
+                                        </span>
                                     }
                                     else { <span class="text-muted">—</span> }
                                 </td>
-                                <td class="table-mobile-hide" style="font-size:.82rem;">@(e.FromName ?? "—")</td>
-                                <td class="table-mobile-hide" style="font-size:.82rem;">@(e.ToName ?? "—")</td>
+                                <td class="table-mobile-hide" style="font-size:.82rem;">
+                                    @if (!string.IsNullOrEmpty(e.FromName))
+                                    {
+                                        <i class="bi bi-person me-1" style="font-size:.7rem;"></i>
+                                        @e.FromName
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
+                                <td class="table-mobile-hide" style="font-size:.82rem;">
+                                    @if (!string.IsNullOrEmpty(e.ToName))
+                                    {
+                                        <i class="bi bi-building me-1" style="font-size:.7rem;"></i>
+                                        @e.ToName
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
                                 <td style="font-weight:700;color:#dc2626;">₹@e.Amount.ToString("N0")</td>
-                                <td class="table-mobile-hide" style="font-size:.8rem;">@e.PaymentMode</td>
+                                <td>
+                                    <span class="payment-mode-badge">
+                                        <i class="bi bi-wallet2 me-1" style="font-size:.7rem;"></i>
+                                        @e.PaymentMode
+                                    </span>
+                                </td>
                                 <td class="text-end">
-                                    <div class="table-actions">
+                                    <div class="table-actions d-flex gap-1 justify-content-end">
                                         <a asp-action="Details" asp-route-id="@e.Id"
                                            class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
                                             <i class="bi bi-eye"></i>
@@ -124,7 +361,7 @@
                                         @if (SessionHelper.IsAdmin(Context.Session))
                                         {
                                             <form asp-action="Delete" asp-route-id="@e.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('Remove this expense?')">
+                                                  onsubmit="return confirm('⚠️ Remove this expense permanently? This action cannot be undone.')">
                                                 <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
