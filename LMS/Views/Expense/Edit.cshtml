@@ -1,4 +1,4 @@
-@model ExpenseFormViewModel
+@* @model ExpenseFormViewModel
 @{ ViewData["Title"] = "Edit Expense"; }
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -120,4 +120,632 @@
     m.addEventListener('change',u); u();
 })();
 </script>
+ *@
 
+
+
+
+
+
+
+@model ExpenseFormViewModel
+@{ 
+    ViewData["Title"] = "Edit Expense";
+    bool isEdit = true;
+}
+
+<style>
+    /* Professional CSS Variables */
+    :root {
+        --primary: #0d6efd;
+        --primary-dark: #0b5ed7;
+        --primary-light: #e8f0fe;
+        --success: #16a34a;
+        --success-light: #eaf9ef;
+        --warning: #f59e0b;
+        --danger: #dc2626;
+        --danger-light: #fef3f2;
+        --gray-50: #f8f9fa;
+        --gray-100: #f1f3f5;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-900: #1a2c3e;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+        --radius-md: 12px;
+        --radius-lg: 16px;
+    }
+
+    /* Page Header */
+    .page-header-custom {
+        margin-bottom: 2rem;
+    }
+
+    .page-header-custom h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-header-custom p {
+        color: var(--gray-600);
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    /* Card Styles */
+    .card-modern {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .card-modern:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header-modern {
+        padding: 1rem 1.5rem;
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-header-modern h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--gray-900);
+    }
+
+    .header-icon {
+        width: 34px;
+        height: 34px;
+        background: var(--primary-light);
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+
+    .card-body-custom {
+        padding: 1.5rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label-custom {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-label-custom i {
+        color: var(--primary);
+        font-size: 0.8rem;
+    }
+
+    .form-control-custom, .form-select-custom {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .form-control-custom:focus, .form-select-custom:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        outline: none;
+    }
+
+    .form-control-custom:hover, .form-select-custom:hover {
+        border-color: var(--gray-300);
+    }
+
+    textarea.form-control-custom {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    /* Input Group */
+    .input-group-custom {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .input-group-custom .input-group-text {
+        background: var(--gray-50);
+        border: 1.5px solid var(--gray-200);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        color: var(--gray-700);
+        font-weight: 600;
+    }
+
+    .input-group-custom .form-control-custom {
+        border-radius: 0 10px 10px 0;
+        border-left: none;
+    }
+
+    .input-group-custom .form-control-custom:focus {
+        border-left: none;
+    }
+
+    /* Row Layout */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    /* Dynamic Fields */
+    .dynamic-field {
+        transition: all 0.3s ease;
+    }
+
+    /* Attachment Link */
+    .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.78rem;
+        color: var(--primary);
+        text-decoration: none;
+        padding: 0.35rem 0.75rem;
+        background: var(--primary-light);
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .attachment-link:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, #0950b3 100%);
+    }
+
+    .btn-outline-custom {
+        background: white;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--gray-700);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+
+    .btn-outline-custom:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateY(-1px);
+    }
+
+    /* Help Card */
+    .help-card {
+        background: linear-gradient(135deg, var(--primary-light) 0%, #f0f4ff 100%);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    .help-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .help-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .help-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .help-list li i {
+        color: var(--primary);
+        font-size: 0.7rem;
+    }
+
+    /* Info Card */
+    .info-card {
+        background: var(--gray-50);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .info-text {
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .card-body-custom {
+            padding: 1rem;
+        }
+
+        .page-header-custom h4 {
+            font-size: 1.25rem;
+        }
+
+        .btn-primary-custom, .btn-outline-custom {
+            padding: 0.6rem 1rem;
+        }
+    }
+
+    /* Animation */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-container {
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    /* Divider */
+    .form-divider {
+        margin: 1rem 0;
+        border: none;
+        border-top: 1px solid var(--gray-200);
+    }
+</style>
+
+<div class="form-container">
+    <div class="page-header-custom">
+        <h4>
+            <i class="bi bi-pencil-square" style="color: var(--primary);"></i>
+            Edit Expense
+        </h4>
+        <p>Update the expense record</p>
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Expense.Id" method="post" enctype="multipart/form-data">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <!-- Main Form Card -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <h6>Expense Details</h6>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="form-row">
+                            <!-- Date -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-calendar3"></i>
+                                    Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" name="Expense.ExpenseDate"
+                                       value="@Model.Expense.ExpenseDate.ToString("yyyy-MM-dd")"
+                                       class="form-control-custom" required />
+                            </div>
+
+                            <!-- Category -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-tag"></i>
+                                    Category
+                                </label>
+                                <select name="Expense.CategoryId" class="form-select-custom">
+                                    <option value="">— Select Category —</option>
+                                    @foreach (var c in Model.Categories)
+                                    {
+                                        <option value="@c.Id" selected="@(Model.Expense.CategoryId == c.Id)">@c.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <!-- From -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-person"></i>
+                                    From
+                                </label>
+                                <input type="text" name="Expense.FromName" value="@Model.Expense.FromName"
+                                       class="form-control-custom" placeholder="Vendor / person name" />
+                            </div>
+
+                            <!-- To -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-building"></i>
+                                    To
+                                </label>
+                                <input type="text" name="Expense.ToName" value="@Model.Expense.ToName"
+                                       class="form-control-custom" placeholder="Paid to" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <!-- Amount -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-cash-stack"></i>
+                                    Amount (₹) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group-custom">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" name="Expense.Amount" value="@Model.Expense.Amount"
+                                           class="form-control-custom" placeholder="0.00" min="1" step="0.01" required />
+                                </div>
+                            </div>
+
+                            <!-- Payment Mode -->
+                            <div class="form-group">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-wallet2"></i>
+                                    Payment Mode
+                                </label>
+                                <select name="Expense.PaymentMode" class="form-select-custom" id="expMode">
+                                    <option value="Cash" selected="@(Model.Expense.PaymentMode=="Cash")">
+                                        💵 Cash
+                                    </option>
+                                    <option value="Cheque" selected="@(Model.Expense.PaymentMode=="Cheque")">
+                                        📝 Cheque
+                                    </option>
+                                    <option value="Online" selected="@(Model.Expense.PaymentMode=="Online")">
+                                        💻 Online Transfer
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Fields -->
+                        <div class="form-row">
+                            <div class="form-group dynamic-field" id="expCheque" style="display: none;">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-receipt"></i>
+                                    Cheque Number
+                                </label>
+                                <input type="text" name="Expense.ChequeNo" value="@Model.Expense.ChequeNo"
+                                       class="form-control-custom" placeholder="e.g., 123456" />
+                            </div>
+
+                            <div class="form-group dynamic-field" id="expTxn" style="display: none;">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-upc-scan"></i>
+                                    Transaction ID
+                                </label>
+                                <input type="text" name="Expense.TransactionId" value="@Model.Expense.TransactionId"
+                                       class="form-control-custom" placeholder="UTR / Transaction ID" />
+                            </div>
+
+                            <div class="form-group dynamic-field" id="expBank" style="display: none;">
+                                <label class="form-label-custom">
+                                    <i class="bi bi-bank2"></i>
+                                    Bank Name
+                                </label>
+                                <input type="text" name="Expense.BankName" value="@Model.Expense.BankName"
+                                       class="form-control-custom" placeholder="e.g., HDFC Bank" />
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="form-group">
+                            <label class="form-label-custom">
+                                <i class="bi bi-chat-text"></i>
+                                Note
+                            </label>
+                            <textarea name="Expense.Note" class="form-control-custom" rows="2"
+                                      placeholder="Details about this expense…">@Model.Expense.Note</textarea>
+                        </div>
+
+                        <!-- Attachment -->
+                        <div class="form-group">
+                            <label class="form-label-custom">
+                                <i class="bi bi-paperclip"></i>
+                                Attachment
+                            </label>
+                            <input type="file" name="attachment" class="form-control-custom" 
+                                   accept=".jpg,.jpeg,.png,.pdf" />
+                            <div class="form-text text-muted small mt-1">
+                                <i class="bi bi-info-circle"></i> 
+                                Supported: JPG, PNG, PDF (Max 2MB) – Leave blank to keep existing
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Expense.Attachment))
+                            {
+                                <a href="/uploads/expenses/@Model.Expense.Attachment" target="_blank"
+                                   class="attachment-link">
+                                    <i class="bi bi-eye"></i> View Current Attachment
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Action Buttons Card -->
+                <div class="card-modern">
+                    <div class="card-header-modern">
+                        <div class="header-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <h6>Actions</h6>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="action-buttons">
+                            <button type="submit" class="btn-primary-custom">
+                                <i class="bi bi-check-lg"></i>
+                                Update Expense
+                            </button>
+                            <a asp-action="Index" class="btn-outline-custom">
+                                <i class="bi bi-x-lg"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Info Card -->
+                <div class="info-card">
+                    <div class="info-text">
+                        <i class="bi bi-clock-history"></i>
+                        Last updated: @Model.Expense.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                    </div>
+                    <div class="form-divider"></div>
+                    <div class="info-text">
+                        <i class="bi bi-person-badge"></i>
+                        Recorded by: @(Model.Expense.CreatedByName ?? "System")
+                    </div>
+                    <div class="form-divider"></div>
+                    <div class="info-text">
+                        <i class="bi bi-calendar-plus"></i>
+                        Created: @Model.Expense.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function(){
+    // Payment mode field toggling
+    var modeEl = document.getElementById('expMode');
+    var cheque = document.getElementById('expCheque');
+    var txn    = document.getElementById('expTxn');
+    var bank   = document.getElementById('expBank');
+    
+    function updateFields(){
+        var mode = modeEl.value;
+        
+        if (mode === 'Cheque') {
+            cheque.style.display = 'block';
+            txn.style.display = 'none';
+            bank.style.display = 'block';
+        } 
+        else if (mode === 'Online') {
+            cheque.style.display = 'none';
+            txn.style.display = 'block';
+            bank.style.display = 'block';
+        } 
+        else {
+            cheque.style.display = 'none';
+            txn.style.display = 'none';
+            bank.style.display = 'none';
+        }
+    }
+    
+    if (modeEl) {
+        modeEl.addEventListener('change', updateFields);
+        updateFields();
+    }
+    
+    // Amount validation
+    var amountInput = document.querySelector('input[name="Expense.Amount"]');
+    if (amountInput) {
+        amountInput.addEventListener('change', function() {
+            if (this.value <= 0) {
+                this.setCustomValidity('Amount must be greater than 0');
+                this.style.borderColor = '#dc2626';
+            } else {
+                this.setCustomValidity('');
+                this.style.borderColor = '';
+            }
+        });
+        
+        amountInput.addEventListener('input', function() {
+            if (this.value > 0) {
+                this.style.borderColor = '';
+            }
+        });
+    }
+})();
+</script>

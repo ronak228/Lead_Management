@@ -1,4 +1,4 @@
-@model Expense
+@* @model Expense
 @{ ViewData["Title"] = "Expense Details"; }
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -84,4 +84,662 @@
             </div>
         }
     </div>
+</div> *@
+
+
+
+
+
+
+
+@model Expense
+@{ 
+    ViewData["Title"] = "Expense Details"; 
+    string amountClass = Model.Amount > 10000 ? "amount-high" : Model.Amount > 5000 ? "amount-medium" : "amount-normal";
+}
+
+<style>
+    /* Professional CSS Variables */
+    :root {
+        --primary: #0d6efd;
+        --primary-dark: #0b5ed7;
+        --primary-light: #e8f0fe;
+        --success: #16a34a;
+        --success-light: #eaf9ef;
+        --warning: #f59e0b;
+        --warning-light: #fff8e7;
+        --danger: #dc2626;
+        --danger-light: #fef3f2;
+        --gray-50: #f8f9fa;
+        --gray-100: #f1f3f5;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-900: #1a2c3e;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+        --radius-md: 12px;
+        --radius-lg: 16px;
+    }
+
+    /* Page Container */
+    .detail-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Page Header */
+    .page-header-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .page-header-custom h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-header-custom p {
+        margin: 0;
+        color: var(--gray-600);
+        font-size: 0.85rem;
+    }
+
+    /* Buttons */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary-custom {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary-custom:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-outline-custom {
+        background: white;
+        border: 1.5px solid var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-outline-custom:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateY(-1px);
+    }
+
+    .btn-danger-custom {
+        background: transparent;
+        border: 1.5px solid var(--danger);
+        color: var(--danger);
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-danger-custom:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Card */
+    .card-modern {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .card-modern:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header-modern {
+        padding: 1rem 1.5rem;
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-header-modern h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--gray-900);
+    }
+
+    .header-icon {
+        width: 34px;
+        height: 34px;
+        background: var(--primary-light);
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+
+    .card-body-custom {
+        padding: 1.5rem;
+    }
+
+    /* Fields Grid */
+    .fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .field-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .field-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .field-label i {
+        font-size: 0.7rem;
+        color: var(--primary);
+    }
+
+    .field-value {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--gray-900);
+        word-break: break-word;
+    }
+
+    /* Amount Section */
+    .amount-section {
+        grid-column: span 2;
+        background: linear-gradient(135deg, var(--danger-light) 0%, #fff5f5 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+
+    .amount-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--danger);
+        margin-bottom: 0.25rem;
+    }
+
+    .amount-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--danger);
+        letter-spacing: -0.5px;
+    }
+
+    .amount-currency {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* Payment Mode Badge */
+    .mode-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.75rem;
+        background: var(--gray-100);
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    /* Divider */
+    .form-divider {
+        margin: 1.25rem 0;
+        border: none;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    /* Note Section */
+    .note-section {
+        background: var(--gray-50);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .note-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .note-content {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--gray-700);
+        white-space: pre-wrap;
+    }
+
+    /* Attachment */
+    .attachment-section {
+        margin-top: 1rem;
+    }
+
+    .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--gray-50);
+        border-radius: 10px;
+        text-decoration: none;
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .attachment-link:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .attachment-image {
+        max-width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .attachment-image:hover {
+        transform: scale(1.02);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Delete Button Container */
+    .delete-container {
+        margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 640px) {
+        .detail-page {
+            padding: 1rem;
+        }
+
+        .page-header-custom {
+            flex-direction: column;
+        }
+
+        .page-header-custom .d-flex {
+            width: 100%;
+        }
+
+        .page-header-custom .btn-custom {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .fields-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .amount-section {
+            grid-column: span 1;
+        }
+
+        .card-body-custom {
+            padding: 1rem;
+        }
+
+        .amount-value {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Animation for fields */
+    .field-item {
+        animation: slideIn 0.3s ease-out backwards;
+    }
+
+    .field-item:nth-child(1) { animation-delay: 0.02s; }
+    .field-item:nth-child(2) { animation-delay: 0.04s; }
+    .field-item:nth-child(3) { animation-delay: 0.06s; }
+    .field-item:nth-child(4) { animation-delay: 0.08s; }
+    .field-item:nth-child(5) { animation-delay: 0.10s; }
+    .field-item:nth-child(6) { animation-delay: 0.12s; }
+    .field-item:nth-child(7) { animation-delay: 0.14s; }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
+
+<div class="detail-page">
+    <!-- Page Header -->
+    <div class="page-header-custom">
+        <div>
+            <h4>
+                <i class="bi bi-receipt" style="color: var(--danger);"></i>
+                Expense Details
+            </h4>
+            <p>Recorded on @Model.ExpenseDate.ToString("dd MMM yyyy")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-custom btn-primary-custom">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a asp-action="Index" class="btn-custom btn-outline-custom">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <div class="header-icon">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <h6>Expense Record</h6>
+        </div>
+        <div class="card-body-custom">
+            <div class="fields-grid">
+                <!-- Date -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-calendar3"></i> Date
+                    </div>
+                    <div class="field-value">
+                        <i class="bi bi-calendar-check me-1"></i>
+                        @Model.ExpenseDate.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-tag"></i> Category
+                    </div>
+                    <div class="field-value">
+                        @if (!string.IsNullOrEmpty(Model.CategoryName))
+                        {
+                            <span class="mode-badge">
+                                <i class="bi bi-folder"></i> @Model.CategoryName
+                            </span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- From -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-person"></i> From
+                    </div>
+                    <div class="field-value">
+                        @if (!string.IsNullOrEmpty(Model.FromName))
+                        {
+                            <i class="bi bi-person-badge me-1"></i>
+                            @Model.FromName
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- To -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-building"></i> To
+                    </div>
+                    <div class="field-value">
+                        @if (!string.IsNullOrEmpty(Model.ToName))
+                        {
+                            <i class="bi bi-building me-1"></i>
+                            @Model.ToName
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Amount Section (spans both columns) -->
+                <div class="amount-section">
+                    <div class="amount-label">
+                        <i class="bi bi-cash-stack"></i> Amount
+                    </div>
+                    <div class="amount-value">
+                        <span class="amount-currency">₹</span> @Model.Amount.ToString("N0")
+                    </div>
+                </div>
+
+                <!-- Payment Mode -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-wallet2"></i> Payment Mode
+                    </div>
+                    <div class="field-value">
+                        <span class="mode-badge">
+                            @if (Model.PaymentMode == "Cash")
+                            {
+                                <i class="bi bi-cash"></i>
+                            }
+                            else if (Model.PaymentMode == "Cheque")
+                            {
+                                <i class="bi bi-receipt"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-wifi"></i>
+                            }
+                            @Model.PaymentMode
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Fields - Cheque Number -->
+                @if (!string.IsNullOrEmpty(Model.ChequeNo))
+                {
+                    <div class="field-item">
+                        <div class="field-label">
+                            <i class="bi bi-receipt"></i> Cheque Number
+                        </div>
+                        <div class="field-value">
+                            <i class="bi bi-upc-scan me-1"></i>
+                            @Model.ChequeNo
+                        </div>
+                    </div>
+                }
+
+                <!-- Dynamic Fields - Transaction ID -->
+                @if (!string.IsNullOrEmpty(Model.TransactionId))
+                {
+                    <div class="field-item">
+                        <div class="field-label">
+                            <i class="bi bi-upc-scan"></i> Transaction ID
+                        </div>
+                        <div class="field-value">
+                            <i class="bi bi-hash me-1"></i>
+                            @Model.TransactionId
+                        </div>
+                    </div>
+                }
+
+                <!-- Dynamic Fields - Bank Name -->
+                @if (!string.IsNullOrEmpty(Model.BankName))
+                {
+                    <div class="field-item">
+                        <div class="field-label">
+                            <i class="bi bi-bank2"></i> Bank Name
+                        </div>
+                        <div class="field-value">
+                            <i class="bi bi-bank me-1"></i>
+                            @Model.BankName
+                        </div>
+                    </div>
+                }
+
+                <!-- Recorded By -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-person-badge"></i> Recorded By
+                    </div>
+                    <div class="field-value">
+                        <i class="bi bi-person-circle me-1"></i>
+                        @(Model.CreatedByName ?? "System")
+                    </div>
+                </div>
+
+                <!-- Recorded On -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-calendar-plus"></i> Recorded On
+                    </div>
+                    <div class="field-value">
+                        <i class="bi bi-clock me-1"></i>
+                        @Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note Section -->
+            @if (!string.IsNullOrWhiteSpace(Model.Note))
+            {
+                <div class="note-section">
+                    <div class="note-title">
+                        <i class="bi bi-chat-text"></i> Note
+                    </div>
+                    <div class="note-content">
+                        <i class="bi bi-quote me-1" style="color: var(--primary);"></i>
+                        @Model.Note
+                    </div>
+                </div>
+            }
+
+            <!-- Attachment Section -->
+            @if (!string.IsNullOrEmpty(Model.Attachment))
+            {
+                <div class="attachment-section">
+                    <div class="field-label mb-2">
+                        <i class="bi bi-paperclip"></i> Attachment
+                    </div>
+                    @{
+                        var ext = System.IO.Path.GetExtension(Model.Attachment ?? "").ToLower();
+                    }
+                    @if (ext == ".pdf")
+                    {
+                        <a href="/uploads/expenses/@Model.Attachment" target="_blank" class="attachment-link">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            View PDF Document
+                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    }
+                    else if (ext == ".jpg" || ext == ".jpeg" || ext == ".png")
+                    {
+                        <div style="cursor: pointer;" onclick="window.open('/uploads/expenses/@Model.Attachment', '_blank');">
+                            <img src="/uploads/expenses/@Model.Attachment" 
+                                 class="attachment-image" 
+                                 alt="Expense Attachment"
+                                 style="max-width: 100%; max-height: 250px; object-fit: contain;" />
+                            <div class="text-muted small text-center mt-1">
+                                <i class="bi bi-zoom-in"></i> Click to view full size
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Delete Button (Admin Only) -->
+    @if (SessionHelper.IsAdmin(Context.Session))
+    {
+        <div class="delete-container">
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('⚠️ Remove this expense permanently?\n\nAmount: ₹@Model.Amount.ToString("N0")\nCategory: @(Model.CategoryName ?? "—")\nDate: @Model.ExpenseDate.ToString("dd MMM yyyy")\n\nThis action cannot be undone!')">
+                <button type="submit" class="btn-custom btn-danger-custom">
+                    <i class="bi bi-trash3"></i> Remove Expense
+                </button>
+            </form>
+        </div>
+    }
 </div>
