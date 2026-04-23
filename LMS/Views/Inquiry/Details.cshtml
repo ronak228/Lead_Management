@@ -142,6 +142,13 @@
         </div>
     </div>
 </div> *@
+
+
+
+
+
+
+
 @model Inquiry
 @{
     ViewData["Title"] = "Inquiry Details";
@@ -167,521 +174,715 @@
 }
 
 <style>
-/* ═══════ DESIGN TOKENS ═══════ */
-:root {
-    --brand:        #4F46E5;
-    --brand-light:  #EEF2FF;
-    --brand-dark:   #3730A3;
-
-    --success:      #059669;
-    --success-bg:   #ECFDF5;
-    --warning:      #D97706;
-    --warning-bg:   #FFFBEB;
-    --info:         #2563EB;
-    --info-bg:      #EFF6FF;
-    --danger:       #DC2626;
-    --danger-bg:    #FEF2F2;
-
-    --surface:      #FFFFFF;
-    --surface-alt:  #F8FAFC;
-    --border:       #E2E8F0;
-    --text:         #1E293B;
-    --text-sub:     #64748B;
-    --text-muted:   #94A3B8;
-
-    --radius:       12px;
-    --radius-sm:    8px;
-    --shadow-sm:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-md:    0 4px 16px rgba(0,0,0,.08);
-    --shadow-lg:    0 12px 40px rgba(0,0,0,.10);
-    --transition:   .25s cubic-bezier(.4,0,.2,1);
-}
-
-/* ═══════ PAGE WRAPPER ═══════ */
-.iq-page {
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 32px 20px 60px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: var(--text);
-    animation: iq-fadeUp .5s ease-out both;
-}
-@@keyframes iq-fadeUp {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ═══════ TOP BAR ═══════ */
-.iq-topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 28px;
-}
-.iq-topbar-left h1 {
-    font-size: 1.65rem;
-    font-weight: 700;
-    margin: 0 0 4px;
-    letter-spacing: -.02em;
-}
-.iq-topbar-left p {
-    margin: 0;
-    color: var(--text-sub);
-    font-size: .9rem;
-}
-.iq-topbar-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-/* ═══════ BUTTONS ═══════ */
-.iq-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 18px;
-    border-radius: var(--radius-sm);
-    font-size: .84rem;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: var(--transition);
-    white-space: nowrap;
-}
-.iq-btn i { font-size: 1rem; }
-
-.iq-btn-brand {
-    background: var(--brand);
-    color: #fff;
-}
-.iq-btn-brand:hover {
-    background: var(--brand-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(79,70,229,.35);
-}
-.iq-btn-outline {
-    background: var(--surface);
-    color: var(--text);
-    border: 1.5px solid var(--border);
-}
-.iq-btn-outline:hover {
-    border-color: var(--brand);
-    color: var(--brand);
-    background: var(--brand-light);
-}
-.iq-btn-warning {
-    background: var(--warning);
-    color: #fff;
-}
-.iq-btn-warning:hover {
-    background: #B45309;
-    transform: translateY(-1px);
-}
-.iq-btn-success {
-    background: var(--success);
-    color: #fff;
-}
-.iq-btn-success:hover {
-    background: #047857;
-    transform: translateY(-1px);
-}
-.iq-btn-danger-outline {
-    background: transparent;
-    color: var(--danger);
-    border: 1.5px solid var(--danger);
-}
-.iq-btn-danger-outline:hover {
-    background: var(--danger-bg);
-}
-
-/* ═══════ GRID LAYOUT ═══════ */
-.iq-grid {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 24px;
-    align-items: start;
-}
-
-/* ═══════ CARD ═══════ */
-.iq-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    transition: box-shadow var(--transition);
-}
-.iq-card:hover {
-    box-shadow: var(--shadow-md);
-}
-
-/* ═══════ MAIN CARD HEADER ═══════ */
-.iq-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface-alt);
-}
-.iq-hotel-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text);
-}
-
-/* ═══════ STATUS BADGE ═══════ */
-.iq-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 999px;
-    font-size: .78rem;
-    font-weight: 600;
-    letter-spacing: .02em;
-    animation: iq-pop .4s ease-out both;
-}
-@@eyframes iq-pop {
-    from { transform: scale(.85); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
-}
-.status-received    { background: var(--info-bg);    color: var(--info); }
-.status-progress    { background: var(--warning-bg); color: var(--warning); }
-.status-completed   { background: var(--success-bg); color: var(--success); }
-.iq-status i { font-size: .85rem; }
-
-/* ═══════ DETAIL FIELDS ═══════ */
-.iq-fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    padding: 0;
-}
-.iq-field {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-    transition: background var(--transition);
-}
-.iq-field:hover {
-    background: var(--surface-alt);
-}
-.iq-field:nth-child(odd) {
-    border-right: 1px solid var(--border);
-}
-.iq-field-label {
-    font-size: .75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-}
-.iq-field-value {
-    font-size: .9rem;
-    font-weight: 600;
-    color: var(--text);
-    word-break: break-word;
-}
-
-/* payment badge */
-.iq-pay-yes {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--success-bg);
-    color: var(--success);
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: .78rem;
-    font-weight: 600;
-}
-.iq-pay-no {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #F1F5F9;
-    color: var(--text-muted);
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: .78rem;
-    font-weight: 600;
-}
-
-/* ═══════ NOTE BLOCK ═══════ */
-.iq-note {
-    margin: 0;
-    padding: 20px 24px;
-    border-top: 1px solid var(--border);
-    background: var(--surface-alt);
-}
-.iq-note-title {
-    font-size: .78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.iq-note-body {
-    font-size: .88rem;
-    line-height: 1.65;
-    color: var(--text-sub);
-    white-space: pre-wrap;
-    background: var(--surface);
-    padding: 14px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-}
-
-/* ═══════ SIDEBAR CARD ═══════ */
-.iq-sidebar .iq-card { position: sticky; top: 24px; }
-
-.iq-client-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 28px 20px 20px;
-    border-bottom: 1px solid var(--border);
-}
-.iq-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand), #7C3AED);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.35rem;
-    font-weight: 700;
-    box-shadow: 0 4px 14px rgba(79,70,229,.3);
-    transition: transform var(--transition);
-}
-.iq-avatar:hover { transform: scale(1.08) rotate(3deg); }
-.iq-client-name {
-    font-weight: 700;
-    font-size: .95rem;
-    margin-top: 4px;
-}
-.iq-client-num {
-    font-size: .82rem;
-    color: var(--text-muted);
-}
-
-.iq-actions {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.iq-actions .iq-btn { width: 100%; justify-content: center; }
-
-.iq-completed-msg {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 16px;
-    background: var(--success-bg);
-    color: var(--success);
-    border-radius: var(--radius-sm);
-    font-size: .84rem;
-    font-weight: 600;
-}
-
-/* ═══════ RESPONSIVE ═══════ */
-@@media (max-width: 860px) {
-    .iq-grid {
-        grid-template-columns: 1fr;
+    /* ============================================
+       PROFESSIONAL INQUIRY DETAILS - FINAL VERSION
+    ============================================ */
+    
+    :root {
+        --primary: #0d6efd;
+        --primary-dark: #0b5ed7;
+        --primary-light: #e8f0fe;
+        --success: #16a34a;
+        --success-light: #eaf9ef;
+        --warning: #f59e0b;
+        --warning-light: #fff8e7;
+        --info: #0ea5e9;
+        --info-light: #e0f2fe;
+        --danger: #dc2626;
+        --danger-light: #fef3f2;
+        --gray-50: #f8f9fa;
+        --gray-100: #f1f3f5;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-900: #1a2c3e;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+        --radius-md: 12px;
+        --radius-lg: 16px;
     }
-    .iq-sidebar .iq-card { position: static; }
-    .iq-fields {
-        grid-template-columns: 1fr;
+
+    /* Page Container */
+    .detail-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        animation: fadeInUp 0.4s ease-out;
     }
-    .iq-field:nth-child(odd) {
-        border-right: none;
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-}
-@@media (max-width: 480px) {
-    .iq-page { padding: 16px 12px 40px; }
-    .iq-topbar { flex-direction: column; }
-    .iq-topbar-actions { width: 100%; }
-    .iq-topbar-actions .iq-btn { flex: 1; justify-content: center; }
-}
+
+    /* Header */
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .detail-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.3px;
+    }
+
+    .detail-header p {
+        margin: 0;
+        color: var(--gray-600);
+        font-size: 0.85rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary-custom {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary-custom:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-outline-custom {
+        background: white;
+        border: 1.5px solid var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .btn-outline-custom:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateY(-1px);
+    }
+
+    .btn-warning-custom {
+        background: var(--warning);
+        color: white;
+    }
+
+    .btn-warning-custom:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+    }
+
+    .btn-success-custom {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-success-custom:hover {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+
+    .btn-danger-custom {
+        background: transparent;
+        border: 1.5px solid var(--danger);
+        color: var(--danger);
+    }
+
+    .btn-danger-custom:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Grid Layout */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 1.75rem;
+        align-items: start;
+    }
+
+    /* Main Card */
+    .card-main {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .card-main:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.75rem;
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .hotel-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .hotel-name i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .status-received {
+        background: var(--info-light);
+        color: var(--info);
+    }
+
+    .status-progress {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .status-completed {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    /* Fields Grid */
+    .fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0;
+    }
+
+    .field-item {
+        padding: 1rem 1.75rem;
+        border-bottom: 1px solid var(--gray-100);
+        transition: background 0.2s ease;
+    }
+
+    .field-item:hover {
+        background: var(--gray-50);
+    }
+
+    .field-item:nth-child(odd) {
+        border-right: 1px solid var(--gray-100);
+    }
+
+    .field-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-600);
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .field-label i {
+        font-size: 0.7rem;
+    }
+
+    .field-value {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--gray-900);
+        word-break: break-word;
+    }
+
+    /* Payment Badge */
+    .payment-yes {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--success-light);
+        color: var(--success);
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .payment-no {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Note Section */
+    .note-section {
+        padding: 1.25rem 1.75rem;
+        background: var(--gray-50);
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .note-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-600);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .note-content {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--gray-700);
+        background: white;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+        white-space: pre-wrap;
+    }
+
+    /* Sidebar Card */
+    .card-sidebar {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .client-profile {
+        text-align: center;
+        padding: 1.75rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
+    }
+
+    .client-avatar {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 0.75rem;
+        background: linear-gradient(135deg, var(--primary), #7c3aed);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        transition: transform 0.2s ease;
+    }
+
+    .client-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    .client-name-sidebar {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .client-number-sidebar {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+    }
+
+    .sidebar-actions {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .sidebar-actions .btn-custom {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .completed-message {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--success-light);
+        color: var(--success);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @@media (max-width: 900px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .card-sidebar {
+            position: static;
+        }
+
+        .fields-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .field-item:nth-child(odd) {
+            border-right: none;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .detail-page {
+            padding: 1rem;
+        }
+
+        .detail-header {
+            flex-direction: column;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .header-actions .btn-custom {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .card-header {
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: center;
+        }
+
+        .field-item {
+            padding: 0.875rem 1rem;
+        }
+
+        .note-section {
+            padding: 1rem;
+        }
+    }
+
+    /* Animation for fields */
+    .field-item {
+        animation: slideIn 0.3s ease-out backwards;
+    }
+
+    .field-item:nth-child(1) { animation-delay: 0.02s; }
+    .field-item:nth-child(2) { animation-delay: 0.04s; }
+    .field-item:nth-child(3) { animation-delay: 0.06s; }
+    .field-item:nth-child(4) { animation-delay: 0.08s; }
+    .field-item:nth-child(5) { animation-delay: 0.10s; }
+    .field-item:nth-child(6) { animation-delay: 0.12s; }
+    .field-item:nth-child(7) { animation-delay: 0.14s; }
+    .field-item:nth-child(8) { animation-delay: 0.16s; }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
 </style>
 
-<!-- ════════════════════════════════════════════════ -->
-<!-- PAGE START -->
-<!-- ════════════════════════════════════════════════ -->
-<div class="iq-page">
+<div class="detail-page">
 
-    <!-- TOP BAR -->
-    <div class="iq-topbar">
-        <div class="iq-topbar-left">
-            <h1>Inquiry Details</h1>
-            <p>Full information for this lead</p>
+    <!-- Header -->
+    <div class="detail-header">
+        <div>
+            <h1>
+                <i class="bi bi-chat-dots-fill" style="color: var(--primary); font-size: 1.5rem;"></i>
+                Inquiry Details
+            </h1>
+            <p>Full information for this lead inquiry</p>
         </div>
-        <div class="iq-topbar-actions">
+        <div class="header-actions">
             @if (isClient)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="iq-btn iq-btn-brand">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-custom btn-primary-custom">
                     <i class="bi bi-pencil-square"></i> Edit
                 </a>
             }
-            <a asp-action="Index" class="iq-btn iq-btn-outline">
+            <a asp-action="Index" class="btn-custom btn-outline-custom">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
         </div>
     </div>
 
-    <!-- GRID -->
-    <div class="iq-grid">
+    <!-- Grid Layout -->
+    <div class="detail-grid">
 
-        <!-- ── MAIN CARD ── -->
-        <div class="iq-main">
-            <div class="iq-card">
-                <div class="iq-card-header">
-                    <h2 class="iq-hotel-name">@Model.HotelName</h2>
-                    <span class="iq-status @statusClass">
-                        <i class="bi @statusIcon"></i> @Model.StatusName
-                    </span>
+        <!-- Main Content -->
+        <div class="card-main">
+            <div class="card-header">
+                <div class="hotel-name">
+                    <i class="bi bi-building"></i>
+                    @Model.HotelName
+                </div>
+                <div class="status-badge @statusClass">
+                    <i class="bi @statusIcon"></i>
+                    @Model.StatusName
+                </div>
+            </div>
+
+            <div class="fields-grid">
+                <!-- Hotel Name -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-building"></i> Hotel Name
+                    </div>
+                    <div class="field-value">@Model.HotelName</div>
                 </div>
 
-                <div class="iq-fields">
-                    @{
-                        void RenderField(string label, string? value) {
-                            <div class="iq-field">
-                                <div class="iq-field-label">@label</div>
-                                <div class="iq-field-value">@(value ?? "—")</div>
-                            </div>
-                        }
-                    }
-
-                    @{ RenderField("Hotel Name",   Model.HotelName); }
-                    @{ RenderField("Client Name",   Model.ClientName); }
-                    @{ RenderField("Client Number", Model.ClientNumber); }
-                    @{ RenderField("City",          Model.CityName); }
-                    @{ RenderField("Module",        Model.ModuleName); }
-                    @{ RenderField("Status",        Model.StatusName); }
-
-                    @if (isStaff)
-                    {
-                        RenderField("Follow-up Date",
-                            Model.FollowupDate.HasValue
-                                ? Model.FollowupDate.Value.ToString("dd MMM yyyy")
-                                : "—");
-
-                        <div class="iq-field">
-                            <div class="iq-field-label">Payment Received</div>
-                            <div class="iq-field-value">
-                                @if (Model.PaymentReceived)
-                                {
-                                    <span class="iq-pay-yes"><i class="bi bi-check-circle-fill"></i> Yes</span>
-                                }
-                                else
-                                {
-                                    <span class="iq-pay-no"><i class="bi bi-x-circle"></i> No</span>
-                                }
-                            </div>
-                        </div>
-                    }
-
-                    @{ RenderField("Added By", Model.CreatedByName); }
-                    @{ RenderField("Created",  Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
-                    @{ RenderField("Updated",  Model.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
+                <!-- Client Name -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-person"></i> Client Name
+                    </div>
+                    <div class="field-value">@Model.ClientName</div>
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(Model.Note))
+                <!-- Client Number -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-telephone"></i> Client Number
+                    </div>
+                    <div class="field-value">@Model.ClientNumber</div>
+                </div>
+
+                <!-- City -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-geo-alt"></i> City
+                    </div>
+                    <div class="field-value">@(Model.CityName ?? "—")</div>
+                </div>
+
+                <!-- Module -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-grid"></i> Module
+                    </div>
+                    <div class="field-value">@(Model.ModuleName ?? "—")</div>
+                </div>
+
+                <!-- Status -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-flag"></i> Status
+                    </div>
+                    <div class="field-value">@(Model.StatusName ?? "—")</div>
+                </div>
+
+                @if (isStaff)
                 {
-                    <div class="iq-note">
-                        <div class="iq-note-title">
-                            <i class="bi bi-sticky"></i> Note
+                    <!-- Follow-up Date -->
+                    <div class="field-item">
+                        <div class="field-label">
+                            <i class="bi bi-calendar-event"></i> Follow-up Date
                         </div>
-                        <div class="iq-note-body">@Model.Note</div>
+                        <div class="field-value">
+                            @if (Model.FollowupDate.HasValue)
+                            {
+                                var isOverdue = Model.FollowupDate.Value.Date < DateTime.Today;
+                                var isToday = Model.FollowupDate.Value.Date == DateTime.Today;
+                                <span style="color: @(isOverdue ? "var(--danger)" : isToday ? "var(--warning)" : "inherit");
+                                             font-weight: @(isOverdue || isToday ? "600" : "400");">
+                                    <i class="bi @(isOverdue ? "bi-exclamation-circle" : isToday ? "bi-bell" : "bi-calendar3") me-1"></i>
+                                    @Model.FollowupDate.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Payment Received -->
+                    <div class="field-item">
+                        <div class="field-label">
+                            <i class="bi bi-cash-stack"></i> Payment Received
+                        </div>
+                        <div class="field-value">
+                            @if (Model.PaymentReceived)
+                            {
+                                <span class="payment-yes">
+                                    <i class="bi bi-check-circle-fill"></i> Yes
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="payment-no">
+                                    <i class="bi bi-x-circle"></i> No
+                                </span>
+                            }
+                        </div>
                     </div>
                 }
-            </div>
-        </div>
 
-        <!-- ── SIDEBAR ── -->
-        <div class="iq-sidebar">
-            <div class="iq-card">
-                <div class="iq-client-box">
-                    <div class="iq-avatar">@avatarInitial</div>
-                    <div class="iq-client-name">@Model.ClientName</div>
-                    <div class="iq-client-num">@Model.ClientNumber</div>
+                <!-- Added By -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-person-badge"></i> Added By
+                    </div>
+                    <div class="field-value">@(Model.CreatedByName ?? "System")</div>
                 </div>
 
-                <div class="iq-actions">
-                    @if (isStaff)
-                    {
-                        if (Model.StatusName == "Received")
-                        {
-                            <form asp-action="AdvanceStatus" asp-route-id="@Model.Id" method="post">
-                                <button type="submit" class="iq-btn iq-btn-warning">
-                                    <i class="bi bi-arrow-right-circle"></i> Mark In Progress
-                                </button>
-                            </form>
-                        }
-                        else if (Model.StatusName == "In Progress")
-                        {
-                            <form asp-action="AdvanceStatus" asp-route-id="@Model.Id" method="post">
-                                <button type="submit" class="iq-btn iq-btn-success">
-                                    <i class="bi bi-check2-all"></i> Mark Completed
-                                </button>
-                            </form>
-                        }
-                        else if (Model.StatusName == "Completed")
-                        {
-                            <div class="iq-completed-msg">
-                                <i class="bi bi-patch-check-fill"></i> Inquiry is completed
-                            </div>
-                        }
-                    }
+                <!-- Created Date -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-calendar-plus"></i> Created
+                    </div>
+                    <div class="field-value">@Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</div>
+                </div>
 
-                    @if (isClient && Model.StatusName == "Received")
+                <!-- Updated Date -->
+                <div class="field-item">
+                    <div class="field-label">
+                        <i class="bi bi-calendar-check"></i> Updated
+                    </div>
+                    <div class="field-value">@Model.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")</div>
+                </div>
+            </div>
+
+            <!-- Note Section -->
+            @if (!string.IsNullOrWhiteSpace(Model.Note))
+            {
+                <div class="note-section">
+                    <div class="note-title">
+                        <i class="bi bi-chat-text"></i> Additional Notes
+                    </div>
+                    <div class="note-content">
+                        <i class="bi bi-quote me-1" style="color: var(--primary);"></i>
+                        @Model.Note
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar -->
+        <div class="card-sidebar">
+            <div class="client-profile">
+                <div class="client-avatar">
+                    @avatarInitial
+                </div>
+                <div class="client-name-sidebar">@Model.ClientName</div>
+                <div class="client-number-sidebar">
+                    <i class="bi bi-telephone me-1"></i> @Model.ClientNumber
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                @if (isStaff)
+                {
+                    if (Model.StatusName == "Received")
                     {
-                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
-                              onsubmit="return confirm('Delete this inquiry permanently?')">
-                            <button type="submit" class="iq-btn iq-btn-danger-outline">
-                                <i class="bi bi-trash3"></i> Delete Inquiry
+                        <form asp-action="AdvanceStatus" asp-route-id="@Model.Id" method="post">
+                            <button type="submit" class="btn-custom btn-warning-custom">
+                                <i class="bi bi-arrow-right-circle"></i> Mark In Progress
                             </button>
                         </form>
                     }
-                </div>
+                    else if (Model.StatusName == "In Progress")
+                    {
+                        <form asp-action="AdvanceStatus" asp-route-id="@Model.Id" method="post">
+                            <button type="submit" class="btn-custom btn-success-custom">
+                                <i class="bi bi-check2-all"></i> Mark Completed
+                            </button>
+                        </form>
+                    }
+                    else if (Model.StatusName == "Completed")
+                    {
+                        <div class="completed-message">
+                            <i class="bi bi-patch-check-fill"></i>
+                            Inquiry is completed
+                        </div>
+                    }
+                }
+
+                @if (isClient && Model.StatusName == "Received")
+                {
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('⚠️ Delete this inquiry permanently?\n\nHotel: @Model.HotelName\nClient: @Model.ClientName\n\nThis action cannot be undone!')">
+                        <button type="submit" class="btn-custom btn-danger-custom">
+                            <i class="bi bi-trash3"></i> Delete Inquiry
+                        </button>
+                    </form>
+                }
             </div>
         </div>
 
-    </div><!-- /iq-grid -->
-</div><!-- /iq-page -->
+    </div>
+</div>
 
 <script>
-    // Animate fields on scroll into view
-    (function () {
-        const fields = document.querySelectorAll('.iq-field');
-        const obs = new IntersectionObserver((entries) => {
-            entries.forEach((e, i) => {
-                if (e.isIntersecting) {
-                    e.target.style.transition = `opacity .4s ease ${i * 40}ms, transform .4s ease ${i * 40}ms`;
-                    e.target.style.opacity = '1';
-                    e.target.style.transform = 'translateY(0)';
-                    obs.unobserve(e.target);
-                }
-            });
-        }, { threshold: 0.15 });
-        fields.forEach(f => {
-            f.style.opacity = '0';
-            f.style.transform = 'translateY(10px)';
-            obs.observe(f);
-        });
-    })();
+    // Smooth page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any additional initialization here
+        console.log('Inquiry details page loaded');
+    });
 </script>

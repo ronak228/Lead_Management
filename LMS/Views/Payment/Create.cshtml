@@ -1,4 +1,4 @@
-@model PaymentFormViewModel
+@* @model PaymentFormViewModel
 @{ ViewData["Title"] = Model.Client != null ? $"Add Payment – {Model.Client.CompanyName}" : "Add Payment"; }
 
 <div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -166,6 +166,535 @@
             if (!clientId) return;
             var url = '@Url.Action("Create", "Payment")';
             window.location.href = url + '?clientId=' + encodeURIComponent(clientId);
+        });
+    }
+})();
+</script> *@
+
+
+
+
+
+
+
+
+@model PaymentFormViewModel
+@{ ViewData["Title"] = Model.Client != null ? $"Add Payment – {Model.Client.CompanyName}" : "Add Payment"; }
+
+<style>
+    /* Clean professional styles matching other pages */
+    
+    /* Card enhancements */
+    .card {
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Button refinements */
+    .btn-brand {
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-brand:hover {
+        background-color: #0b5ed7;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+    
+    .btn-outline-secondary {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-secondary:hover {
+        transform: translateY(-1px);
+    }
+    
+    /* Card header */
+    .card-header-clean {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 1rem 1.25rem;
+        background: #ffffff;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .card-header-clean h6 {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+        color: #1a2c3e;
+    }
+    
+    /* Form styling */
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #495057;
+        margin-bottom: 6px;
+    }
+    
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd;
+    }
+    
+    .form-text {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    
+    /* Alert box styling */
+    .alert-light {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+    }
+    
+    /* Stats boxes */
+    .stat-box {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-box:hover {
+        background: #f0f2f5;
+        transform: translateY(-2px);
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    
+    .stat-value.positive {
+        color: #16a34a;
+    }
+    
+    .stat-value.negative {
+        color: #dc2626;
+    }
+    
+    /* Action buttons container */
+    .action-buttons {
+        position: sticky;
+        top: 20px;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        body {
+            padding: 12px;
+        }
+        
+        .page-header h4 {
+            font-size: 1.3rem;
+        }
+        
+        .row.g-4 {
+            gap: 1rem;
+        }
+        
+        .stat-box {
+            padding: 8px;
+        }
+        
+        .stat-value {
+            font-size: 0.95rem;
+        }
+        
+        .action-buttons {
+            position: static;
+            margin-top: 1rem;
+        }
+    }
+    
+    /* Animation for fields */
+    #fieldCheque,
+    #fieldTransaction,
+    #fieldBank {
+        transition: all 0.3s ease;
+    }
+    
+    /* File input styling */
+    input[type="file"] {
+        padding: 0.4rem;
+        background: #f8f9fa;
+    }
+    
+    input[type="file"]:hover {
+        background: #f0f2f5;
+    }
+</style>
+
+<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+        <h4>Add Payment</h4>
+        <p class="text-muted small mb-0">@(Model.Client != null ? $"Recording payment for {Model.Client.CompanyName} ({Model.Client.ClientRef})" : "Record a new payment")</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header-clean">
+                    <h6><i class="bi bi-cash-coin me-2" style="color:#0d6efd;"></i>Payment Details</h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Client != null)
+                    {
+                        <input type="hidden" name="Payment.ClientId" value="@Model.Payment.ClientId" />
+                        
+                        <!-- Client Info Alert -->
+                        <div class="alert alert-light border mb-4 py-3 px-3" style="font-size:.83rem; border-radius: 12px;">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <i class="bi bi-building me-2" style="color:#0d6efd;"></i>
+                                    <strong>@Model.Client.CompanyName</strong>
+                                    <span class="text-muted ms-2" style="font-family:monospace; background: #e9ecef; padding: 2px 6px; border-radius: 6px;">
+                                        @Model.Client.ClientRef
+                                    </span>
+                                </div>
+                                <div>
+                                    <span style="color:#6c757d;">Contract:</span>
+                                    <strong class="ms-1">₹@Model.Client.TotalAmount.ToString("N0")</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Summary -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div class="stat-label">
+                                        <i class="bi bi-calculator me-1" style="font-size:.65rem;"></i>
+                                        Contract Total
+                                    </div>
+                                    <div class="stat-value">
+                                        ₹@Model.Client.TotalAmount.ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div class="stat-label">
+                                        <i class="bi bi-check-circle me-1" style="font-size:.65rem;"></i>
+                                        Paid
+                                    </div>
+                                    <div class="stat-value positive">
+                                        ₹@Model.Client.TotalPaid.ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-box">
+                                    <div class="stat-label">
+                                        <i class="bi bi-clock-history me-1" style="font-size:.65rem;"></i>
+                                        Remaining
+                                    </div>
+                                    <div class="stat-value negative">
+                                        ₹@Model.Client.TotalRemaining.ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Client <span class="text-danger">*</span>
+                            </label>
+                            <select id="clientSelect" name="Payment.ClientId" class="form-select" required>
+                                <option value="">Select Client</option>
+                                @foreach (var client in Model.Clients)
+                                {
+                                    <option value="@client.Id" selected="@(Model.Payment.ClientId == client.Id)">
+                                        @client.CompanyName (@client.ClientRef)
+                                    </option>
+                                }
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select a client to load contract totals before saving payment.
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row g-3">
+                        @if (Model.Client != null)
+                        {
+                            <div class="col-md-12">
+                                <label class="form-label">
+                                    <i class="bi bi-calculator me-1"></i>
+                                    Contract Total (₹)
+                                </label>
+                                <input type="number" name="Payment.TotalAmount" 
+                                       value="@(Model.Payment.TotalAmount > 0 ? Model.Payment.TotalAmount : Model.Client?.TotalAmount ?? 0)"
+                                       class="form-control" placeholder="0.00" min="0" step="0.01" />
+                                <div class="form-text">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    Enter contract total to update the client's total amount.
+                                </div>
+                            </div>
+                        }
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-cash-stack me-1"></i>
+                                Amount (₹) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="Payment.Amount" value="@Model.Payment.Amount"
+                                   class="form-control" placeholder="0.00" min="1" step="0.01" required />
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                Payment Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" name="Payment.PaymentDate"
+                                   value="@Model.Payment.PaymentDate.ToString("yyyy-MM-dd")"
+                                   class="form-control" required />
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="bi bi-wallet2 me-1"></i>
+                                Payment Mode <span class="text-danger">*</span>
+                            </label>
+                            <select name="Payment.PaymentMode" class="form-select" id="paymentMode">
+                                <option value="Cash" selected="@(Model.Payment.PaymentMode=="Cash")">
+                                    💵 Cash
+                                </option>
+                                <option value="Cheque" selected="@(Model.Payment.PaymentMode=="Cheque")">
+                                    📝 Cheque
+                                </option>
+                                <option value="Online" selected="@(Model.Payment.PaymentMode=="Online")">
+                                    💻 Online Transfer
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <!-- Cheque fields (shown when mode=Cheque) -->
+                        <div class="col-md-6" id="fieldCheque" style="display: none;">
+                            <label class="form-label">
+                                <i class="bi bi-receipt me-1"></i>
+                                Cheque Number
+                            </label>
+                            <input type="text" name="Payment.ChequeNo" value="@Model.Payment.ChequeNo"
+                                   class="form-control" placeholder="e.g., 123456" />
+                        </div>
+                        
+                        <!-- Online fields (shown when mode=Online) -->
+                        <div class="col-md-6" id="fieldTransaction" style="display: none;">
+                            <label class="form-label">
+                                <i class="bi bi-upc-scan me-1"></i>
+                                Transaction ID
+                            </label>
+                            <input type="text" name="Payment.TransactionId" value="@Model.Payment.TransactionId"
+                                   class="form-control" placeholder="UTR / Transaction ID" />
+                        </div>
+                        
+                        <div class="col-md-6" id="fieldBank" style="display: none;">
+                            <label class="form-label">
+                                <i class="bi bi-bank2 me-1"></i>
+                                Bank Name
+                            </label>
+                            <input type="text" name="Payment.BankName" value="@Model.Payment.BankName"
+                                   class="form-control" placeholder="e.g., HDFC Bank" />
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">
+                                <i class="bi bi-chat-text me-1"></i>
+                                Note
+                            </label>
+                            <input type="text" name="Payment.Note" value="@Model.Payment.Note"
+                                   class="form-control" placeholder="e.g., 1st instalment, Advance payment..." />
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">
+                                <i class="bi bi-paperclip me-1"></i>
+                                Payment Proof
+                            </label>
+                            <input type="file" name="proofFile" class="form-control" 
+                                   accept=".jpg,.jpeg,.png,.pdf" />
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Supported formats: JPG, PNG, PDF (Max 2MB)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="action-buttons">
+                <div class="card shadow-sm">
+                    <div class="card-header-clean">
+                        <h6><i class="bi bi-check-circle me-2" style="color:#0d6efd;"></i>Actions</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-column gap-3">
+                            <button type="submit" class="btn btn-brand py-2" style="font-size:.86rem; font-weight: 600;">
+                                <i class="bi bi-check-circle me-2"></i>Save Payment
+                            </button>
+                            @if (Model.Client != null)
+                            {
+                                <a asp-controller="Client" asp-action="Details" asp-route-id="@Model.Client.Id"
+                                   class="btn btn-outline-secondary py-2" style="font-size:.84rem;">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index" class="btn btn-outline-secondary py-2" style="font-size:.84rem;">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Help Card -->
+                <div class="card shadow-sm mt-3">
+                    <div class="card-header-clean">
+                        <h6><i class="bi bi-question-circle me-2" style="color:#0d6efd;"></i>Need Help?</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-currency-rupee" style="color:#0d6efd;"></i>
+                                <small class="text-muted">Amount should be positive number</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar" style="color:#0d6efd;"></i>
+                                <small class="text-muted">Payment date can be in past or present</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-file-pdf" style="color:#0d6efd;"></i>
+                                <small class="text-muted">Upload payment receipt as proof</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+(function(){
+    // Payment mode field toggling
+    var modeEl = document.getElementById('paymentMode');
+    var cheque = document.getElementById('fieldCheque');
+    var txn    = document.getElementById('fieldTransaction');
+    var bank   = document.getElementById('fieldBank');
+    
+    function updateFields(){
+        var m = modeEl.value;
+        if (m === 'Cheque') {
+            cheque.style.display = 'block';
+            txn.style.display = 'none';
+            bank.style.display = 'block';
+            
+            // Add required attribute to cheque field
+            document.querySelector('input[name="Payment.ChequeNo"]').required = true;
+            document.querySelector('input[name="Payment.TransactionId"]').required = false;
+            document.querySelector('input[name="Payment.BankName"]').required = true;
+        } 
+        else if (m === 'Online') {
+            cheque.style.display = 'none';
+            txn.style.display = 'block';
+            bank.style.display = 'block';
+            
+            // Add required attribute to online fields
+            document.querySelector('input[name="Payment.ChequeNo"]').required = false;
+            document.querySelector('input[name="Payment.TransactionId"]').required = true;
+            document.querySelector('input[name="Payment.BankName"]').required = true;
+        } 
+        else {
+            cheque.style.display = 'none';
+            txn.style.display = 'none';
+            bank.style.display = 'none';
+            
+            // Remove required attributes
+            document.querySelector('input[name="Payment.ChequeNo"]').required = false;
+            document.querySelector('input[name="Payment.TransactionId"]').required = false;
+            document.querySelector('input[name="Payment.BankName"]').required = false;
+        }
+    }
+    
+    modeEl.addEventListener('change', updateFields);
+    updateFields();
+
+    // Client selection redirect
+    var clientSelect = document.getElementById('clientSelect');
+    if (clientSelect) {
+        clientSelect.addEventListener('change', function () {
+            var clientId = this.value;
+            if (!clientId) return;
+            var url = '@Url.Action("Create", "Payment")';
+            window.location.href = url + '?clientId=' + encodeURIComponent(clientId);
+        });
+    }
+    
+    // Amount validation
+    var amountInput = document.querySelector('input[name="Payment.Amount"]');
+    if (amountInput) {
+        amountInput.addEventListener('change', function() {
+            if (this.value <= 0) {
+                this.setCustomValidity('Amount must be greater than 0');
+            } else {
+                this.setCustomValidity('');
+            }
         });
     }
 })();

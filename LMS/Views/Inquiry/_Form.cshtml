@@ -1,10 +1,9 @@
-@model InquiryFormViewModel
+@* @model InquiryFormViewModel
 @{
     var formRole = Context.Session.GetString("UserRole") ?? "";
     bool formIsClient = formRole == "Client";
 }
 
-@* Client linkage — hidden field only for clients *@
 @if (formIsClient)
 {
     <input type="hidden" name="Inquiry.ClientId" value="@Model.Inquiry.ClientId" />
@@ -115,4 +114,559 @@
             </a>
         </div>
     </div>
+</div> *@
+
+
+
+
+
+@model InquiryFormViewModel
+@{
+    var formRole = Context.Session.GetString("UserRole") ?? "";
+    bool formIsClient = formRole == "Client";
+}
+
+<style>
+    /* ============================================
+       PROFESSIONAL FORM DESIGN - FINAL VERSION
+    ============================================ */
+    
+    :root {
+        --primary: #0d6efd;
+        --primary-dark: #0b5ed7;
+        --primary-light: #e8f0fe;
+        --success: #16a34a;
+        --success-light: #eaf9ef;
+        --danger: #dc2626;
+        --danger-light: #fef3f2;
+        --warning: #f59e0b;
+        --gray-50: #f8f9fa;
+        --gray-100: #f1f3f5;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-900: #1a2c3e;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+    
+    /* Card Styles */
+    .form-card-modern {
+        background: white;
+        border-radius: 24px;
+        border: none;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-card-modern:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    /* Card Header */
+    .card-header-modern {
+        padding: 1.25rem 1.75rem;
+        background: linear-gradient(135deg, #ffffff 0%, var(--gray-50) 100%);
+        border-bottom: 2px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-header-modern h6 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--gray-900);
+        letter-spacing: -0.3px;
+    }
+    
+    .header-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--primary-light);
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+    
+    /* Form Elements */
+    .form-group-modern {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label-modern i {
+        color: var(--primary);
+        font-size: 0.85rem;
+    }
+    
+    .form-control-modern, .form-select-modern {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.875rem;
+        border: 2px solid var(--gray-200);
+        border-radius: 14px;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .form-control-modern:focus, .form-select-modern:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+        outline: none;
+    }
+    
+    .form-control-modern:hover, .form-select-modern:hover {
+        border-color: var(--gray-300);
+    }
+    
+    textarea.form-control-modern {
+        resize: vertical;
+        min-height: 90px;
+    }
+    
+    /* Client Alert */
+    .client-alert-modern {
+        background: linear-gradient(135deg, var(--primary-light) 0%, #f4f8ff 100%);
+        border: 1px solid rgba(13, 110, 253, 0.2);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .client-alert-modern i {
+        font-size: 1.25rem;
+        color: var(--primary);
+    }
+    
+    .client-alert-modern span {
+        font-size: 0.85rem;
+        color: var(--gray-700);
+    }
+    
+    .client-alert-modern strong {
+        color: var(--primary);
+        font-weight: 700;
+    }
+    
+    .client-ref-modern {
+        font-family: 'SF Mono', 'Courier New', monospace;
+        background: white;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-left: 6px;
+        display: inline-block;
+    }
+    
+    /* Row Layout */
+    .form-row-modern {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    
+    /* Action Buttons */
+    .action-buttons-modern {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-primary-modern {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border: none;
+        border-radius: 14px;
+        padding: 0.85rem 1.75rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: white;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        flex: 1;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, #0950b3 100%);
+    }
+    
+    .btn-outline-modern {
+        background: white;
+        border: 2px solid var(--gray-200);
+        border-radius: 14px;
+        padding: 0.85rem 1.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        flex: 1;
+        text-decoration: none;
+    }
+    
+    .btn-outline-modern:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+        background: var(--primary-light);
+    }
+    
+    /* Sidebar Tips */
+    .tips-card-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .tips-title-modern {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .tips-list-modern {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .tips-list-modern li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+        font-size: 0.8rem;
+        opacity: 0.95;
+    }
+    
+    .tips-list-modern li i {
+        font-size: 1rem;
+    }
+    
+    /* Required Fields Card */
+    .required-card-modern {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 20px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .required-title-modern {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .field-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--gray-100);
+        padding: 0.35rem 0.9rem;
+        border-radius: 30px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+    
+    /* Divider */
+    .form-divider {
+        margin: 1.5rem 0;
+        border: none;
+        border-top: 2px solid var(--gray-200);
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .form-row-modern {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .action-buttons-modern {
+            flex-direction: column;
+        }
+        
+        .btn-primary-modern, .btn-outline-modern {
+            width: 100%;
+        }
+        
+        .form-card-modern {
+            margin-bottom: 1rem;
+        }
+        
+        .card-header-modern {
+            padding: 1rem 1.25rem;
+        }
+    }
+    
+    /* Animations */
+    @@keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @@keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .main-form-section {
+        animation: slideInLeft 0.5s ease-out;
+    }
+    
+    .sidebar-section {
+        animation: slideInRight 0.5s ease-out;
+    }
+</style>
+
+@* Client linkage — hidden field only for clients *@
+@if (formIsClient)
+{
+    <input type="hidden" name="Inquiry.ClientId" value="@Model.Inquiry.ClientId" />
+}
+
+<div class="row g-4">
+    <!-- Main Form Section -->
+    <div class="col-lg-8 main-form-section">
+        <!-- Hotel & Client Details Card -->
+        <div class="form-card-modern">
+            <div class="card-header-modern">
+                <div class="header-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <h6>Hotel & Client Details</h6>
+            </div>
+            <div class="card-body p-4">
+                @if (formIsClient && Model.Inquiry.ClientId.HasValue)
+                {
+                    <div class="client-alert-modern">
+                        <i class="bi bi-person-badge"></i>
+                        <span>
+                            Submitting as <strong>@(Model.Inquiry.ClientCompany ?? Model.Inquiry.ClientRef)</strong>
+                            <span class="client-ref-modern">@Model.Inquiry.ClientRef</span>
+                        </span>
+                    </div>
+                }
+                
+                <div class="form-row-modern">
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-building"></i>
+                            Hotel Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="Inquiry.HotelName" value="@Model.Inquiry.HotelName"
+                               class="form-control-modern" placeholder="e.g., Grand Hyatt Mumbai" required />
+                    </div>
+                    
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-person"></i>
+                            Client Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="Inquiry.ClientName" value="@Model.Inquiry.ClientName"
+                               class="form-control-modern" placeholder="Full name" required />
+                    </div>
+                </div>
+                
+                <div class="form-row-modern">
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-phone"></i>
+                            Client Number <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="Inquiry.ClientNumber" value="@Model.Inquiry.ClientNumber"
+                               class="form-control-modern" placeholder="+91 98765 43210" required />
+                    </div>
+                    
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-geo-alt"></i>
+                            City
+                        </label>
+                        <input type="text" name="Inquiry.CityText"
+                               value="@(Model.Inquiry.CityText ?? Model.Inquiry.CityName)"
+                               class="form-control-modern" placeholder="Type or select a city…"
+                               list="cityList" autocomplete="off" />
+                        <datalist id="cityList">
+                            @foreach (var c in Model.Cities)
+                            {
+                                <option value="@c.Name"></option>
+                            }
+                        </datalist>
+                    </div>
+                </div>
+                
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="bi bi-chat-text"></i>
+                        Note
+                    </label>
+                    <textarea name="Inquiry.Note" class="form-control-modern" rows="3"
+                              placeholder="Additional notes about this inquiry…">@Model.Inquiry.Note</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Section -->
+    <div class="col-lg-4 sidebar-section">
+        <!-- Classification Card -->
+        <div class="form-card-modern">
+            <div class="card-header-modern">
+                <div class="header-icon">
+                    <i class="bi bi-sliders2"></i>
+                </div>
+                <h6>Classification</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="form-group-modern">
+                    <label class="form-label-modern">
+                        <i class="bi bi-grid"></i>
+                        Module
+                    </label>
+                    <select name="Inquiry.ModuleId" class="form-select-modern">
+                        <option value="">— Select Module —</option>
+                        @foreach (var m in Model.Modules)
+                        {
+                            var selModule = Model.Inquiry.ModuleId == m.Id;
+                            <option value="@m.Id" selected="@selModule">@m.Name</option>
+                        }
+                    </select>
+                </div>
+                
+                @if (formIsClient)
+                {
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-flag"></i>
+                            Status
+                        </label>
+                        <select name="Inquiry.StatusId" class="form-select-modern">
+                            <option value="">— Select Status —</option>
+                            @foreach (var s in Model.Statuses)
+                            {
+                                var selStatus = Model.Inquiry.StatusId == s.Id;
+                                <option value="@s.Id" selected="@selStatus">@s.Name</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="bi bi-calendar-event"></i>
+                            Follow-up Date
+                        </label>
+                        <input type="date" name="Inquiry.FollowupDate"
+                               value="@(Model.Inquiry.FollowupDate.HasValue ? Model.Inquiry.FollowupDate.Value.ToString("yyyy-MM-dd") : "")"
+                               class="form-control-modern" />
+                    </div>
+                }
+            </div>
+        </div>
 </div>
+
+<!-- Action Buttons - Full Width -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="action-buttons-modern">
+            <button type="submit" class="btn-primary-modern">
+                <i class="bi bi-check-lg"></i>
+                Save Inquiry
+            </button>
+            <a asp-action="Index" class="btn-outline-modern">
+                <i class="bi bi-x-lg"></i>
+                Cancel
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-focus on first field
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstInput = document.querySelector('input[name="Inquiry.HotelName"]');
+        if (firstInput) firstInput.focus();
+        
+        // Add validation classes
+        const requiredFields = document.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    this.style.borderColor = '#dc2626';
+                    this.style.backgroundColor = '#fef3f2';
+                } else {
+                    this.style.borderColor = '#e9ecef';
+                    this.style.backgroundColor = 'white';
+                }
+            });
+            
+            field.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.style.borderColor = '#e9ecef';
+                    this.style.backgroundColor = 'white';
+                }
+            });
+        });
+    });
+</script>
+

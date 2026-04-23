@@ -255,7 +255,6 @@
     </div>
 </div> *@
 
-
 @model InquiryListViewModel
 @{
     ViewData["Title"] = "Inquiries";
@@ -264,160 +263,419 @@
 }
 
 <style>
+    /* Professional CSS Variables */
     :root {
-        --brand: #6c5ce7;
-        --brand-dark: #5a4bd1;
-        --brand-soft: #f0eeff;
-        --ink: #1f2937;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --bg: #f5f7fb;
-        --surface: #ffffff;
-        --radius: 12px;
-        --shadow-sm: 0 1px 2px rgba(16,24,40,.05);
-        --shadow-md: 0 4px 14px rgba(16,24,40,.06);
+        --primary: #0d6efd;
+        --primary-dark: #0b5ed7;
+        --primary-light: #e8f0fe;
+        --success: #16a34a;
+        --success-light: #eaf9ef;
+        --warning: #f59e0b;
+        --warning-light: #fff8e7;
+        --danger: #dc2626;
+        --danger-light: #fef3f2;
+        --gray-50: #f8f9fa;
+        --gray-100: #f1f3f5;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-900: #1a2c3e;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+        --radius-md: 12px;
+        --radius-lg: 16px;
     }
 
-    body { background: var(--bg); font-family: 'Inter', system-ui, sans-serif; color: var(--ink); }
-
-    /* Page header */
-    .page-head {
-        display: flex; align-items: flex-start; justify-content: space-between;
-        gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+    body {
+        background: #f5f7fb;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
-    .page-head h4 { font-size: 1.25rem; font-weight: 700; margin: 0 0 2px; }
-    .page-head .subtitle { color: var(--muted); font-size: .82rem; margin: 0; }
-    .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .btn-brand {
-        background: var(--brand); color: #fff; border: none; border-radius: 8px;
-        padding: 8px 14px; font-size: .83rem; font-weight: 600;
-        display: inline-flex; align-items: center; gap: 6px; transition: background .2s;
-    }
-    .btn-brand:hover { background: var(--brand-dark); color: #fff; }
-
-    /* Card / panel */
-    .panel {
-        background: var(--surface); border: 1px solid var(--line);
-        border-radius: var(--radius); box-shadow: var(--shadow-sm);
-        margin-bottom: 16px; overflow: hidden;
-    }
-    .panel-head {
-        padding: 14px 18px; border-bottom: 1px solid var(--line);
-        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    /* Page Header */
+    .page-header-modern {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
         flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
     }
-    .panel-head h6 { margin: 0; font-size: .92rem; font-weight: 700; }
-    .panel-body { padding: 16px 18px; }
 
-    /* Filter grid - fully responsive */
+    .page-header-modern h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.3px;
+    }
+
+    .page-header-modern .subtitle {
+        color: var(--gray-600);
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    /* Button Styles */
+    .btn-primary-modern {
+        background: var(--primary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary-modern:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+        color: white;
+    }
+
+    .btn-outline-success-modern {
+        background: white;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 10px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--gray-700);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline-success-modern:hover {
+        border-color: var(--success);
+        color: var(--success);
+        background: var(--success-light);
+        transform: translateY(-1px);
+    }
+
+    /* Card/Panel */
+    .card-modern {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .card-modern:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header-modern {
+        padding: 1rem 1.5rem;
+        background: white;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .card-header-modern h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--gray-900);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .records-count {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--gray-600);
+        margin-left: 0.5rem;
+    }
+
+    .card-body-modern {
+        padding: 1.25rem 1.5rem;
+    }
+
+    /* Filter Grid */
     .filter-grid {
-        display: grid; gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
-    .filter-grid label {
-        display: block; font-size: .72rem; font-weight: 600;
-        color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
-        margin-bottom: 4px;
+
+    .filter-group label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--gray-600);
+        margin-bottom: 0.4rem;
     }
-    .filter-grid .form-control,
-    .filter-grid .form-select {
-        height: 38px; font-size: .85rem; border-radius: 8px;
-        border: 1px solid var(--line);
+
+    .filter-group .form-control,
+    .filter-group .form-select {
+        height: 40px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        border: 1.5px solid var(--gray-200);
+        transition: all 0.2s ease;
     }
-    .filter-grid .form-control:focus,
-    .filter-grid .form-select:focus {
-        border-color: var(--brand); box-shadow: 0 0 0 3px rgba(108,92,231,.12);
+
+    .filter-group .form-control:focus,
+    .filter-group .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
     }
-    .input-group-text {
-        background: #fff; border: 1px solid var(--line); border-right: none;
-        border-radius: 8px 0 0 8px; color: var(--muted);
+
+    .input-group-custom {
+        display: flex;
+        align-items: stretch;
     }
-    .input-group .form-control { border-radius: 0 8px 8px 0; }
+
+    .input-group-custom .input-group-text {
+        background: white;
+        border: 1.5px solid var(--gray-200);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        color: var(--gray-600);
+    }
+
+    .input-group-custom .form-control {
+        border-radius: 0 10px 10px 0;
+        border-left: none;
+    }
 
     .filter-actions {
-        display: flex; gap: 8px; align-items: flex-end;
-    }
-    .filter-actions .btn { height: 38px; font-size: .82rem; flex: 1; }
-
-    /* Table */
-    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .dash-table {
-        width: 100%; border-collapse: collapse; font-size: .85rem;
-    }
-    .dash-table thead th {
-        background: #fafbfc; color: var(--muted); font-weight: 600;
-        font-size: .72rem; text-transform: uppercase; letter-spacing: .03em;
-        padding: 10px 12px; border-bottom: 1px solid var(--line);
-        text-align: left; white-space: nowrap;
-    }
-    .dash-table tbody td {
-        padding: 12px; border-bottom: 1px solid #f1f3f5; vertical-align: middle;
-    }
-    .dash-table tbody tr:hover { background: #fafbfc; }
-    .dash-table tbody tr:last-child td { border-bottom: none; }
-    .fw-500 { font-weight: 600; }
-
-    /* Pills / badges */
-    .pill {
-        display: inline-block; font-size: .7rem; font-weight: 600;
-        padding: 3px 9px; border-radius: 20px; white-space: nowrap;
-    }
-    .pill-brand { background: var(--brand-soft); color: var(--brand); }
-    .pill-status { background: #fef9ec; color: #92400e; }
-
-    /* Action buttons */
-    .row-actions { display: inline-flex; gap: 6px; }
-    .btn-sm-icon {
-        width: 32px; height: 32px; padding: 0;
-        display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 6px;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
     }
 
-    /* Empty state */
-    .empty-state {
-        text-align: center; padding: 40px 16px; color: var(--muted);
-    }
-    .empty-state i { font-size: 2.2rem; color: #cbd5e1; display: block; margin-bottom: 8px; }
-
-    /* Records count */
-    .records-count { color: var(--muted); font-weight: 400; font-size: .76rem; }
-
-    /* ============ MOBILE ============ */
-    @@media (max-width: 767.98px) {
-        .page-head { margin-bottom: 12px; }
-        .page-head h4 { font-size: 1.1rem; }
-        .page-actions { width: 100%; }
-        .page-actions .btn, .page-actions .btn-brand { flex: 1; justify-content: center; }
-        .panel-body { padding: 12px; }
-        .panel-head { padding: 12px 14px; }
-        .filter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .filter-actions { grid-column: 1 / -1; }
-        .table-mobile-hide { display: none !important; }
-        .dash-table thead th, .dash-table tbody td { padding: 10px 8px; font-size: .8rem; }
-        .btn-sm-icon { width: 30px; height: 30px; }
+    .filter-actions .btn {
+        height: 40px;
+        font-size: 0.82rem;
+        padding: 0 1.25rem;
     }
 
-    @@media (max-width: 380px) {
-        .filter-grid { grid-template-columns: 1fr; }
-        .page-head h4 { font-size: 1rem; }
-        .dash-table thead th, .dash-table tbody td { padding: 8px 6px; font-size: .75rem; }
+    /* Table Styles */
+    .table-responsive-custom {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    @@media (min-width: 768px) and (max-width: 991.98px) {
-        .filter-grid { grid-template-columns: repeat(3, 1fr); }
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .table-modern thead th {
+        background: var(--gray-50);
+        color: var(--gray-600);
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 1rem 1rem;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+    }
+
+    .table-modern tbody td {
+        padding: 1rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--gray-50);
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Badges/Pills */
+    .badge-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        white-space: nowrap;
+    }
+
+    .badge-primary {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .badge-status {
+        background: var(--warning-light);
+        color: #92400e;
+    }
+
+    /* Client Ref Link */
+    .client-ref-link {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        font-family: monospace;
+        font-size: 0.72rem;
+        background: var(--primary-light);
+        padding: 2px 8px;
+        border-radius: 16px;
+        display: inline-block;
+    }
+
+    .client-ref-link:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: inline-flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon-sm {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--gray-200);
+        background: white;
+        color: var(--gray-600);
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon-sm:hover {
+        background: var(--primary-light);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+    /* Follow-up Indicators */
+    .followup-overdue {
+        color: var(--danger);
+        font-weight: 600;
+    }
+
+    .followup-today {
+        color: var(--warning);
+        font-weight: 600;
+    }
+
+    /* Empty State */
+    .empty-state-modern {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: var(--gray-600);
+    }
+
+    .empty-state-modern i {
+        font-size: 3rem;
+        color: var(--gray-300);
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .page-header-modern h4 {
+            font-size: 1.25rem;
+        }
+
+        .card-header-modern {
+            padding: 0.875rem 1rem;
+        }
+
+        .card-body-modern {
+            padding: 1rem;
+        }
+
+        .filter-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .filter-actions {
+            grid-column: 1 / -1;
+        }
+
+        .table-mobile-hide {
+            display: none !important;
+        }
+
+        .table-modern thead th,
+        .table-modern tbody td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-icon-sm {
+            width: 28px;
+            height: 28px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header-modern {
+            flex-direction: column;
+        }
+
+        .page-actions-modern {
+            width: 100%;
+        }
+
+        .page-actions-modern .btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    @@media (min-width: 769px) and (max-width: 1024px) {
+        .filter-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
 </style>
 
 <div class="container-fluid px-2 px-md-3 py-3">
 
     <!-- HEADER -->
-    <div class="page-head">
+    <div class="page-header-modern">
         <div>
-            <h4>@(isClient ? "My Inquiries" : "Inquiries")</h4>
+            <h4>
+                <i class="bi bi-chat-dots-fill" style="color: var(--primary); font-size: 1.5rem;"></i>
+                @(isClient ? "My Inquiries" : "Inquiries")
+            </h4>
             <p class="subtitle">@(isClient ? "Your submitted service inquiries" : "Manage all hotel lead inquiries")</p>
         </div>
-        <div class="page-actions">
+        <div class="page-actions-modern d-flex gap-2 flex-wrap">
             @if (!isClient)
             {
                 <a asp-action="Export"
@@ -428,13 +686,13 @@
                    asp-route-filterCity="@Model.FilterCity"
                    asp-route-dateFrom="@Model.DateFrom"
                    asp-route-dateTo="@Model.DateTo"
-                   class="btn btn-outline-success" style="font-size:.83rem;border-radius:8px;">
-                    <i class="bi bi-file-earmark-excel me-1"></i>Export
+                   class="btn-outline-success-modern">
+                    <i class="bi bi-file-earmark-excel"></i> Export
                 </a>
             }
             @if (isClient)
             {
-                <a asp-action="Create" class="btn-brand">
+                <a asp-action="Create" class="btn-primary-modern">
                     <i class="bi bi-plus-lg"></i> New Inquiry
                 </a>
             }
@@ -442,21 +700,21 @@
     </div>
 
     <!-- FILTERS -->
-    <div class="panel">
-        <div class="panel-body">
+    <div class="card-modern">
+        <div class="card-body-modern">
             <form method="get" asp-action="Index">
                 <div class="filter-grid">
-                    <div>
-                        <label>Search</label>
-                        <div class="input-group">
+                    <div class="filter-group">
+                        <label><i class="bi bi-search"></i> Search</label>
+                        <div class="input-group-custom">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
                             <input type="text" name="search" value="@Model.Search"
                                    class="form-control" placeholder="Hotel, client, number…" />
                         </div>
                     </div>
 
-                    <div>
-                        <label>Status</label>
+                    <div class="filter-group">
+                        <label><i class="bi bi-flag"></i> Status</label>
                         <select name="filterStatus" class="form-select">
                             <option value="">All Statuses</option>
                             @foreach (var s in Model.Statuses)
@@ -470,8 +728,8 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label>Module</label>
+                    <div class="filter-group">
+                        <label><i class="bi bi-grid"></i> Module</label>
                         <select name="filterModule" class="form-select">
                             <option value="">All Modules</option>
                             @foreach (var m in Model.Modules)
@@ -487,8 +745,8 @@
 
                     @if (!isClient)
                     {
-                        <div>
-                            <label>City</label>
+                        <div class="filter-group">
+                            <label><i class="bi bi-geo-alt"></i> City</label>
                             <select name="filterCity" class="form-select">
                                 <option value="">All Cities</option>
                                 @foreach (var ci in Model.Cities)
@@ -503,8 +761,8 @@
                         </div>
                     }
 
-                    <div>
-                        <label>Payment</label>
+                    <div class="filter-group">
+                        <label><i class="bi bi-cash-stack"></i> Payment</label>
                         <select name="filterPayment" class="form-select">
                             <option value="">All</option>
                             @if (Model.FilterPayment == "yes") {
@@ -522,21 +780,21 @@
 
                     @if (!isClient)
                     {
-                        <div>
-                            <label>From Date</label>
+                        <div class="filter-group">
+                            <label><i class="bi bi-calendar3"></i> From Date</label>
                             <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
                         </div>
-                        <div>
-                            <label>To Date</label>
+                        <div class="filter-group">
+                            <label><i class="bi bi-calendar3"></i> To Date</label>
                             <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
                         </div>
                     }
 
                     <div class="filter-actions">
-                        <button type="submit" class="btn-brand" style="border-radius:8px;">
+                        <button type="submit" class="btn-primary-modern" style="width:100%; justify-content: center;">
                             <i class="bi bi-funnel"></i> Filter
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary" style="border-radius:8px;">
+                        <a asp-action="Index" class="btn-outline-success-modern" style="justify-content: center;">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
@@ -545,10 +803,11 @@
         </div>
     </div>
 
-    <!-- LIST -->
-    <div class="panel">
-        <div class="panel-head">
+    <!-- INQUIRIES LIST -->
+    <div class="card-modern">
+        <div class="card-header-modern">
             <h6>
+                <i class="bi bi-table" style="color: var(--primary);"></i>
                 @(isClient ? "My Inquiries" : "All Inquiries")
                 <span class="records-count">(@Model.Inquiries.Count records)</span>
             </h6>
@@ -556,20 +815,24 @@
 
         @if (Model.Inquiries.Count == 0)
         {
-            <div class="empty-state">
+            <div class="empty-state-modern">
                 <i class="bi bi-inbox"></i>
-                <div>No inquiries found.
-                    <a asp-action="Create" style="color:var(--brand);font-weight:600;">Add one →</a>
-                </div>
+                <div>No inquiries found.</div>
+                @if (isClient)
+                {
+                    <a asp-action="Create" class="btn-primary-modern mt-3" style="display: inline-flex;">
+                        <i class="bi bi-plus-lg"></i> Create Your First Inquiry
+                    </a>
+                }
             </div>
         }
         else
         {
-            <div class="table-scroll">
-                <table class="dash-table">
+            <div class="table-responsive-custom">
+                <table class="table-modern">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th style="width: 45px;">#</th>
                             <th>Hotel Name</th>
                             @if (!isClient) { <th class="table-mobile-hide">Client</th> }
                             @if (!isClient) { <th class="table-mobile-hide">Client ID</th> }
@@ -579,7 +842,7 @@
                             <th>Status</th>
                             @if (!isClient) { <th class="table-mobile-hide">Follow-up</th> }
                             <th class="table-mobile-hide">Date</th>
-                            <th class="text-end">Actions</th>
+                            <th style="width: 80px;" class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -587,17 +850,17 @@
                         @foreach (var inq in Model.Inquiries)
                         {
                             <tr>
-                                <td class="text-muted">@sr</td>
-                                <td class="fw-500">@inq.HotelName</td>
+                                <td class="text-muted fw-semibold">@sr</td>
+                                <td class="fw-semibold" style="color: var(--gray-900);">@inq.HotelName</td>
 
                                 @if (!isClient)
                                 {
                                     <td class="table-mobile-hide">@inq.ClientName</td>
-                                    <td class="table-mobile-hide" style="font-size:.72rem;">
+                                    <td class="table-mobile-hide">
                                         @if (inq.ClientId.HasValue)
                                         {
                                             <a asp-controller="Client" asp-action="Details" asp-route-id="@inq.ClientId"
-                                               style="color:var(--brand);font-weight:600;text-decoration:none;font-family:monospace;">
+                                               class="client-ref-link">
                                                 @(string.IsNullOrEmpty(inq.ClientRef) ? $"#{inq.ClientId}" : inq.ClientRef)
                                             </a>
                                         }
@@ -608,54 +871,68 @@
                                     </td>
                                 }
 
-                                <td class="table-mobile-hide" style="font-size:.8rem;">@inq.ClientNumber</td>
-                                <td class="table-mobile-hide" style="font-size:.8rem;">@(inq.CityName ?? "—")</td>
+                                <td class="table-mobile-hide">
+                                    <i class="bi bi-telephone me-1" style="font-size: 0.65rem;"></i>
+                                    @inq.ClientNumber
+                                </td>
+                                <td class="table-mobile-hide">
+                                    @if (!string.IsNullOrEmpty(inq.CityName))
+                                    {
+                                        <i class="bi bi-geo-alt me-1" style="font-size: 0.65rem; color: var(--primary);"></i>
+                                        @inq.CityName
+                                    }
+                                    else { <span class="text-muted">—</span> }
+                                </td>
                                 <td class="table-mobile-hide">
                                     @if (inq.ModuleName != null)
                                     {
-                                        <span class="pill pill-brand">@inq.ModuleName</span>
+                                        <span class="badge-modern badge-primary">
+                                            <i class="bi bi-grid"></i> @inq.ModuleName
+                                        </span>
                                     }
                                     else { <span class="text-muted">—</span> }
                                 </td>
                                 <td>
                                     @if (inq.StatusName != null)
                                     {
-                                        <span class="pill pill-status">@inq.StatusName</span>
+                                        <span class="badge-modern badge-status">
+                                            <i class="bi bi-flag"></i> @inq.StatusName
+                                        </span>
                                     }
                                     else { <span class="text-muted">—</span> }
                                 </td>
 
                                 @if (!isClient)
                                 {
-                                    <td class="table-mobile-hide" style="font-size:.75rem;">
+                                    <td class="table-mobile-hide">
                                         @if (inq.FollowupDate.HasValue)
                                         {
                                             var isOverdue = inq.FollowupDate.Value.Date < DateTime.Today;
-                                            var isToday   = inq.FollowupDate.Value.Date == DateTime.Today;
-                                            <span style="color:@(isOverdue?"#dc2626":isToday?"#d97706":"inherit");font-weight:@(isToday||isOverdue?"600":"400");">
+                                            var isToday = inq.FollowupDate.Value.Date == DateTime.Today;
+                                            <span class="@(isOverdue ? "followup-overdue" : isToday ? "followup-today" : "")">
+                                                <i class="bi @(isOverdue ? "bi-exclamation-circle" : isToday ? "bi-bell" : "bi-calendar3") me-1"></i>
                                                 @inq.FollowupDate.Value.ToString("dd MMM yy")
-                                                @if (isOverdue) { <i class="bi bi-exclamation-circle ms-1 text-danger"></i> }
-                                                @if (isToday)   { <i class="bi bi-bell ms-1 text-warning"></i> }
                                             </span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
                                 }
 
-                                <td class="text-muted table-mobile-hide" style="font-size:.75rem;">
+                                <td class="table-mobile-hide text-muted">
+                                    <i class="bi bi-calendar3 me-1" style="font-size: 0.65rem;"></i>
                                     @inq.CreatedAt.ToString("dd MMM yy")
                                 </td>
 
                                 <td class="text-end">
-                                    <div class="row-actions">
+                                    <div class="action-buttons">
                                         <a asp-action="Details" asp-route-id="@inq.Id"
-                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                           class="btn-icon-sm" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         @if (isClient)
                                         {
                                             <a asp-action="Edit" asp-route-id="@inq.Id"
-                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="Edit">
+                                               class="btn-icon-sm" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                         }
