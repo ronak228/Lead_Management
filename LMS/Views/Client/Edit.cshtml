@@ -1,9 +1,39 @@
 @model ClientFormViewModel
-@{ ViewData["Title"] = "Edit Client"; }
+@{
+    ViewData["Title"] = "Edit Client";
+}
 
-<div class="page-header">
-    <h4>Edit Client</h4>
+<style>
+    .page-header-custom {
+        margin-bottom: 1.75rem;
+    }
+    .page-header-custom h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a2c3e;
+        margin-bottom: 0.25rem;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .page-header-custom p {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+    @@media (max-width: 768px) {
+        .page-header-custom h4 {
+            font-size: 1.3rem;
+        }
+    }
+</style>
+
+<div class="page-header-custom">
+    <h4>
+        <i class="bi bi-pencil-square" style="color: #0d6efd;"></i>
     <p>Update details for <strong>@Model.Client.CompanyName</strong></p>
+    </h4>
 </div>
 
 <form asp-action="Edit" asp-route-id="@Model.Client.Id" method="post">

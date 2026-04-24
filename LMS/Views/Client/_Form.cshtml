@@ -1,4 +1,4 @@
-@model ClientFormViewModel
+@* @model ClientFormViewModel
 
 @{
     bool isNew = Model.Client.Id == 0;
@@ -63,14 +63,6 @@
                             }
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Total Contract Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₹</span>
-                            <input type="number" name="Client.TotalAmount" value="@Model.Client.TotalAmount"
-                                   class="form-control" placeholder="0.00" min="0" step="0.01" />
-                        </div>
-                    </div>
                     <div class="col-12">
                         <label class="form-label">Address</label>
                         <input type="text" name="Client.Address" value="@Model.Client.Address"
@@ -113,5 +105,393 @@
                 </a>
             </div>
         </div>
+    </div>
+</div> *@
+
+
+
+
+
+
+@model ClientFormViewModel
+
+@{
+    bool isNew = Model.Client.Id == 0;
+}
+
+@*
+    Professional redesign of the Client Form.
+    - Preserves ALL existing model bindings, field names, validations and the submit flow.
+    - Uses Bootstrap 5 + Bootstrap Icons (already in use via .btn-brand & .bi-* classes).
+    - Keeps your existing color theme (.btn-brand). New accents are applied via scoped
+      CSS variables so nothing else in your app is affected.
+*@
+
+<style>
+    /* Scoped styles – only affect the client form page */
+    .client-form-page {
+        --cf-surface: #ffffff;
+        --cf-surface-2: #f8fafc;
+        --cf-border: #e6e9f0;
+        --cf-text: #1f2937;
+        --cf-muted: #6b7280;
+        --cf-ring: rgba(99, 102, 241, .12);
+        --cf-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+        background: linear-gradient(180deg, #f7f8fb 0%, #ffffff 100%);
+        min-height: 100%;
+        padding: 24px 0 48px;
+    }
+
+    .client-form-page .cf-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .client-form-page .cf-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--cf-text);
+        letter-spacing: -.01em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .client-form-page .cf-title .cf-title-icon {
+        width: 36px; height: 36px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 10px;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 1.05rem;
+    }
+
+    .client-form-page .cf-subtitle {
+        color: var(--cf-muted);
+        font-size: .85rem;
+        margin-top: 2px;
+    }
+
+    .client-form-page .cf-card {
+        background: var(--cf-surface);
+        border: 1px solid var(--cf-border);
+        border-radius: 14px;
+        box-shadow: var(--cf-shadow);
+        overflow: hidden;
+    }
+
+    .client-form-page .cf-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--cf-border);
+        background: var(--cf-surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .client-form-page .cf-card-header h2 {
+        font-size: .95rem;
+        font-weight: 600;
+        color: var(--cf-text);
+        margin: 0;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .client-form-page .cf-card-header .bi {
+        color: #4f46e5;
+    }
+
+    .client-form-page .cf-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: .72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        letter-spacing: .02em;
+    }
+
+    .client-form-page .cf-card-body {
+        padding: 22px;
+    }
+
+    .client-form-page .cf-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 20px;
+    }
+
+    .client-form-page .cf-grid .cf-full {
+        grid-column: 1 / -1;
+    }
+
+    @@media (max-width: 720px) {
+        .client-form-page .cf-grid { grid-template-columns: 1fr; }
+    }
+
+    .client-form-page .cf-field label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+        letter-spacing: .01em;
+    }
+
+    .client-form-page .cf-field .req { color: #ef4444; margin-left: 2px; }
+
+    .client-form-page .form-control,
+    .client-form-page select.form-control {
+        border-radius: 10px;
+        border: 1px solid var(--cf-border);
+        padding: 10px 12px;
+        font-size: .88rem;
+        background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .client-form-page .form-control:focus,
+    .client-form-page select.form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px var(--cf-ring);
+        outline: none;
+    }
+
+    .client-form-page textarea.form-control {
+        min-height: 92px;
+        resize: vertical;
+    }
+
+    /* Sidebar / payment summary */
+    .client-form-page .cf-side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: sticky;
+        top: 16px;
+    }
+
+    .client-form-page .cf-summary {
+        padding: 18px;
+    }
+
+    .client-form-page .cf-summary h3 {
+        font-size: .82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--cf-muted);
+        margin: 0 0 12px;
+    }
+
+    .client-form-page .cf-summary .cf-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--cf-border);
+        font-size: .88rem;
+        color: #4b5563;
+    }
+    .client-form-page .cf-summary .cf-row:last-child { border-bottom: none; }
+
+    .client-form-page .cf-summary .cf-row strong { color: #111827; font-weight: 700; }
+    .client-form-page .cf-summary .cf-row .ok { color: #059669; font-weight: 700; }
+    .client-form-page .cf-summary .cf-row .due { color: #dc2626; font-weight: 700; }
+
+    .client-form-page .cf-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .client-form-page .cf-actions .btn {
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 10px 14px;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+
+    .client-form-page .cf-actions .btn-brand {
+        box-shadow: 0 6px 16px rgba(79, 70, 229, .18);
+    }
+
+    .client-form-page .cf-help {
+        font-size: .78rem;
+        color: var(--cf-muted);
+        line-height: 1.45;
+    }
+</style>
+
+<div class="client-form-page">
+    <div class="container-fluid px-3 px-md-4">
+
+        <!-- Page Header -->
+        <div class="cf-header">
+            
+
+            @if (!string.IsNullOrEmpty(Model.Client.ClientRef))
+            {
+                <span class="cf-badge">
+                    <i class="bi bi-hash"></i> Client ID: @Model.Client.ClientRef
+                </span>
+            }
+        </div>
+
+        <form asp-action="Save" method="post" novalidate>
+            <input type="hidden" asp-for="Client.Id" />
+
+            <div class="row g-4">
+
+                <!-- Main form column -->
+                <div class="col-lg-8">
+                    <div class="cf-card">
+                        <div class="cf-card-header">
+                            <h2><i class="bi bi-building"></i> Company &amp; Contact Details</h2>
+                            <span class="cf-help d-none d-md-block">Fields marked with <span class="req">*</span> are required</span>
+                        </div>
+
+                        <div class="cf-card-body">
+                            <div class="cf-grid">
+
+                                <div class="cf-field">
+                                    <label>Company Name<span class="req">*</span></label>
+                                    <input asp-for="Client.CompanyName"
+                                           class="form-control"
+                                           placeholder="e.g. Grand Hyatt Hotels" required />
+                                </div>
+
+                                <div class="cf-field">
+                                    <label>Contact Person<span class="req">*</span></label>
+                                    <input asp-for="Client.ContactPerson"
+                                           class="form-control"
+                                           placeholder="Full name" required />
+                                </div>
+
+                                <div class="cf-field">
+                                    <label>Phone<span class="req">*</span></label>
+                                    <input asp-for="Client.Phone"
+                                           class="form-control"
+                                           placeholder="+91 98765 43210" required />
+                                </div>
+
+                                <div class="cf-field">
+                                    <label>Email</label>
+                                    @if (isNew)
+                                    {
+                                        <input asp-for="Client.Email"
+                                               class="form-control"
+                                               placeholder="contact@company.com" />
+                                    }
+                                    else
+                                    {
+                                        <input asp-for="Client.Email"
+                                               class="form-control"
+                                               placeholder="contact@company.com"
+                                               disabled />
+                                        <input type="hidden" asp-for="Client.Email" />
+                                    }
+                                </div>
+
+                                <div class="cf-field">
+                                    <label>City</label>
+                                    <input name="Client.CityText"
+                                           value="@(Model.Client.CityText ?? Model.Client.CityName)"
+                                           class="form-control"
+                                           placeholder="Type or select a city…"
+                                           list="cityList" autocomplete="off" />
+                                    <datalist id="cityList">
+                                        @foreach (var c in Model.Cities)
+                                        {
+                                            <option value="@c.Name"></option>
+                                        }
+                                    </datalist>
+                                </div>
+
+                                <div class="cf-field">
+                                    <label>Module</label>
+                                    <select asp-for="Client.ModuleId" class="form-control">
+                                        <option value="">— Select Module —</option>
+                                        @foreach (var m in Model.Modules)
+                                        {
+                                            <option value="@m.Id" selected="@(Model.Client.ModuleId == m.Id)">@m.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="cf-field cf-full">
+                                    <label>Address</label>
+                                    <input asp-for="Client.Address"
+                                           class="form-control"
+                                           placeholder="Street, area…" />
+                                </div>
+
+                                <div class="cf-field cf-full">
+                                    <label>Notes</label>
+                                    <textarea asp-for="Client.Notes"
+                                              class="form-control"
+                                              placeholder="Any additional information about this client…">@Model.Client.Notes</textarea>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar column -->
+                <div class="col-lg-4">
+                    <div class="cf-side">
+
+                        @if (Model.Client.TotalAmount > 0 && Model.Client.Id > 0)
+                        {
+                            <div class="cf-card cf-summary">
+                                <h3><i class="bi bi-wallet2 me-1"></i> Payment Summary</h3>
+
+                                <div class="cf-row">
+                                    <span>Total</span>
+                                    <strong>₹@Model.Client.TotalAmount.ToString("N0")</strong>
+                                </div>
+                                <div class="cf-row">
+                                    <span>Paid</span>
+                                    <span class="ok">₹@Model.Client.TotalPaid.ToString("N0")</span>
+                                </div>
+                                <div class="cf-row">
+                                    <span>Remaining</span>
+                                    <span class="due">₹@Model.Client.TotalRemaining.ToString("N0")</span>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="cf-card cf-summary">
+                            <h3><i class="bi bi-lightning-charge me-1"></i> Actions</h3>
+
+                            <div class="cf-actions">
+                                <button type="submit" class="btn btn-brand">
+                                    <i class="bi bi-check2-circle me-1"></i> Save Client
+                                </button>
+                                <a asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-1"></i> Cancel
+                                </a>
+                            </div>
+
+                            <p class="cf-help mt-3 mb-0">
+                                Make sure the contact details are accurate before saving.
+                                You can edit this client anytime from the client list.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
     </div>
 </div>

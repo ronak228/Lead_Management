@@ -1,449 +1,459 @@
-@* @model PaymentListViewModel
-@{ 
-    ViewData["Title"] = "Payments";
-    var payRole = Context.Session.GetString("UserRole") ?? "";
-}
-
-<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div>
-        <h4>@(payRole == "Client" ? "My Payments" : $"Payments{(Model.CompanyName != null ? $" – {Model.CompanyName}" : "")}")</h4>
-        <p>@(payRole == "Client" ? "Your payment history" : "All recorded income & payment receipts")</p>
-    </div>
-    @if (payRole != "Client")
-    {
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Export" asp-route-clientId="@Model.ClientId"
-           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
-           class="btn btn-outline-success px-3" style="font-size:.83rem;">
-            <i class="bi bi-file-earmark-excel me-1"></i>Export
-        </a>
-        <a asp-controller="Payment" asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
-            <i class="bi bi-plus me-1"></i>New Payment
-        </a>
-    </div>
-    }
-</div>
-
-<!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body py-3 px-4">
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
-            <div style="min-width:200px;flex:1;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Search Company</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white" style="border-right:none;"><i class="bi bi-search text-muted" style="font-size:.8rem;"></i></span>
-                    <input type="text" name="search" value="@Model.Search" class="form-control" style="border-left:none;" placeholder="Company or ref…" />
-                </div>
-            </div>
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
-                <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
-            </div>
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
-                <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
-            </div>
-            @if (Model.ClientId.HasValue)
-            {
-                <input type="hidden" name="clientId" value="@Model.ClientId" />
-            }
-            <div class="d-flex gap-2 align-self-end">
-                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
-                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Summary -->
-<div class="card mb-3">
-    <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <span style="font-size:.75rem;color:var(--text-muted);">Total Payments (@Model.Payments.Count records)</span>
-        </div>
-        <div style="font-size:1.1rem;font-weight:700;color:#16a34a;">
-            ₹@Model.TotalAmount.ToString("N0")
-        </div>
-    </div>
-</div>
-
-<!-- Table -->
-<div class="card">
-    <div class="card-body p-0">
-        @if (Model.Payments.Count == 0)
-        {
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-cash-stack d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
-                <span style="font-size:.84rem;">No payments found.</span>
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-clean mb-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th class="table-mobile-hide">Ref</th>
-                            <th>Company</th>
-                            <th>Amount</th>
-                            <th>Mode</th>
-                            <th class="table-mobile-hide">Date</th>
-                            <th class="table-mobile-hide">Note</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{ int sr = 1; }
-                        @foreach (var p in Model.Payments)
-                        {
-                            <tr>
-                                <td class="text-muted">@sr</td>
-                                <td class="table-mobile-hide" style="font-size:.75rem;font-family:monospace;color:var(--brand);font-weight:600;">@(p.ClientRef ?? "—")</td>
-                                <td class="fw-500">@(p.CompanyName ?? "—")</td>
-                                <td style="font-weight:700;color:#16a34a;">₹@p.Amount.ToString("N0")</td>
-                                <td>
-                                    <span style="background:#f0f0ff;color:var(--brand);font-size:.72rem;padding:2px 8px;border-radius:20px;font-weight:600;">@p.PaymentMode</span>
-                                </td>
-                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@p.PaymentDate.ToString("dd MMM yyyy")</td>
-                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(p.Note ?? "—")</td>
-                                <td class="text-end">
-                                    <div class="table-actions">
-                                        <a asp-action="Details" asp-route-id="@p.Id"
-                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        @if (!string.IsNullOrEmpty(p.ProofFile))
-                                        {
-                                            <a href="/uploads/payments/@p.ProofFile" target="_blank"
-                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View Proof">
-                                                <i class="bi bi-paperclip"></i>
-                                            </a>
-                                        }
-                                        @if (SessionHelper.IsAdmin(Context.Session))
-                                        {
-                                            <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('Remove this payment?')">
-                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                            sr++;
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div> *@
-
-
-
-
-
 @model PaymentListViewModel
-@{ 
+@{
     ViewData["Title"] = "Payments";
     var payRole = Context.Session.GetString("UserRole") ?? "";
 }
 
 <style>
-    /* Clean professional styles - NO animations on table */
-    
-    /* Card enhancements */
-    .card {
-        border-radius: 16px;
-        border: 1px solid rgba(0,0,0,0.05);
-        transition: none;
-        background: #ffffff;
+    /* ========== PROFESSIONAL DESIGN SYSTEM (from Client Details) ========== */
+    :root {
+        --c-brand: #2563eb;
+        --c-brand-soft: color-mix(in srgb, var(--c-brand) 8%, transparent);
+        --c-text: #111827;
+        --c-text-2: #374151;
+        --c-muted: #6b7280;
+        --c-muted-2: #9ca3af;
+        --c-surface: #ffffff;
+        --c-surface-2: #f9fafb;
+        --c-border: #e5e7eb;
+        --c-border-2: #f3f4f6;
+        --c-success: #15803d;
+        --c-success-soft: #f0fdf4;
+        --c-danger: #b91c1c;
+        --c-danger-soft: #fef2f2;
+        --c-warn: #b45309;
+        --c-warn-soft: #fffbeb;
+
+        --r-sm: 6px;
+        --r-md: 8px;
+        --r-lg: 12px;
+
+        --sp-1: 4px;
+        --sp-2: 8px;
+        --sp-3: 12px;
+        --sp-4: 16px;
+        --sp-5: 20px;
+        --sp-6: 24px;
+        --sp-7: 32px;
+        --sp-8: 40px;
     }
-    
-    /* Button refinements */
-    .btn-brand {
-        background-color: #0d6efd;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.2s ease;
+
+    .payments-page {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--c-text);
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: clamp(16px, 3vw, 28px);
+        box-sizing: border-box;
+        line-height: 1.5;
     }
-    
-    .btn-brand:hover {
-        background-color: #0b5ed7;
-        transform: translateY(-1px);
-    }
-    
-    .btn-outline-success {
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        border: 1.5px solid #198754;
-        color: #198754;
-    }
-    
-    .btn-outline-success:hover {
-        background-color: #198754;
-        color: white;
-    }
-    
-    .btn-outline-secondary {
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
-    
-    /* Filter form */
-    .filter-form .form-control,
-    .filter-form .input-group-text {
-        border-radius: 8px;
-    }
-    
-    .filter-form .form-control:focus {
-        box-shadow: 0 0 0 2px rgba(13,110,253,0.1);
-        border-color: #0d6efd;
-    }
-    
-    .filter-form .form-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: #6c757d;
-        margin-bottom: 4px;
-    }
-    
-    /* Clean table styling - NO animations */
-    .table-clean {
-        border-collapse: collapse;
-    }
-    
-    .table-clean thead th {
-        background: #f8f9fa;
-        font-weight: 700;
-        font-size: 0.73rem;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: #495057;
-        border-bottom: 2px solid #dee2e6;
-        padding: 1rem 1rem;
-    }
-    
-    .table-clean tbody td {
-        padding: 1rem 1rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    /* Simple badge for payment mode */
-    .payment-mode-badge {
-        background: #f0f0ff;
-        color: #0d6efd;
-        font-size: 0.72rem;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-        display: inline-flex;
+    .payments-page * { box-sizing: border-box; }
+
+    /* ---------- Modern page header (from Inquiry) ---------- */
+    .page-header-modern {
+        display: flex;
         align-items: center;
-        gap: 5px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
-    
-    /* Reference code styling */
-    .ref-code {
-        font-family: 'Courier New', monospace;
-        font-size: 0.73rem;
+    .page-header-modern h4 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        background: linear-gradient(135deg, var(--c-text) 0%, var(--c-brand) 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.15;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .page-header-modern h4 i {
+        -webkit-text-fill-color: var(--c-brand);
+        font-size: 1.4rem;
+    }
+    .page-header-modern .subtitle {
+        color: var(--c-muted);
+        font-size: 0.88rem;
+        font-weight: 500;
+        margin: 0;
+    }
+    .page-actions-modern {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+
+    /* ---------- Buttons (modern) ---------- */
+    .btn-primary-modern,
+    .btn-outline-success-modern,
+    .btn-secondary-modern {
+        height: 40px;
+        padding: 0 1.1rem;
         font-weight: 600;
-        color: #0d6efd;
-        background: #f1f3f5;
-        padding: 3px 8px;
-        border-radius: 6px;
-        display: inline-block;
-    }
-    
-    /* Summary card */
-    .summary-card {
-        background: #ffffff;
-        border-left: 3px solid #0d6efd;
-        border-radius: 12px;
-    }
-    
-    .summary-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #6c757d;
-    }
-    
-    .total-amount {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #16a34a;
-    }
-    
-    /* Simple action buttons - NO hover animations */
-    .table-actions .btn-sm-icon {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border-radius: 6px;
+        font-size: 0.83rem;
+        border-radius: 10px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #dee2e6;
+        gap: 0.45rem;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.22s cubic-bezier(.4,0,.2,1);
+        line-height: 1;
+        border: 1.5px solid transparent;
+    }
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #7c3aed 100%);
+        color: white;
+        box-shadow: 0 4px 12px -3px rgba(79, 70, 229, 0.4);
+    }
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px -4px rgba(79, 70, 229, 0.5);
+        color: white;
+    }
+    .btn-outline-success-modern {
         background: white;
-        transition: none;
+        border-color: var(--c-border);
+        color: var(--c-text-2);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
-    
-    .table-actions .btn-sm-icon:hover {
-        background-color: #f8f9fa;
+    .btn-outline-success-modern:hover {
+        border-color: var(--c-success);
+        color: var(--c-success);
+        background: var(--c-success-soft);
+        transform: translateY(-2px);
     }
-    
-    .table-actions .btn-outline-secondary:hover {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: white;
+    .btn-secondary-modern {
+        background: white;
+        border-color: var(--c-border);
+        color: var(--c-text-2);
     }
-    
-    .table-actions .btn-outline-danger:hover {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
+    .btn-secondary-modern:hover {
+        border-color: var(--c-brand);
+        background: var(--c-brand-soft);
+        color: var(--c-brand);
+        transform: translateY(-1px);
     }
-    
-    /* Input group */
-    .input-group .input-group-text {
-        background-color: white;
-        border-radius: 8px 0 0 8px;
+
+    /* ---------- Cards, filters, table (unchanged from your Payments code) ---------- */
+    .card-modern {
+        background: var(--c-surface);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        margin-bottom: var(--sp-5);
+    }
+    .card-header {
+        padding: var(--sp-4) var(--sp-5);
+        border-bottom: 1px solid var(--c-border-2);
+        background: var(--c-surface);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--sp-3);
+    }
+    .card-header h6 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--c-text);
+    }
+    .card-body {
+        padding: var(--sp-5);
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-3);
+        align-items: flex-end;
+    }
+    .filter-group {
+        flex: 1;
+        min-width: 160px;
+    }
+    .filter-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--c-muted);
+        margin-bottom: 4px;
+    }
+    .filter-input {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        transition: 0.2s;
+    }
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--c-brand);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    .input-group-icon {
+        display: flex;
+        align-items: stretch;
+    }
+    .input-group-icon .input-group-text {
+        background: white;
+        border: 1px solid var(--c-border);
         border-right: none;
+        border-radius: var(--r-md) 0 0 var(--r-md);
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+        color: var(--c-muted);
     }
-    
-    .input-group .form-control {
-        border-radius: 0 8px 8px 0;
+    .input-group-icon .filter-input {
+        border-radius: 0 var(--r-md) var(--r-md) 0;
         border-left: none;
     }
-    
-    /* Responsive */
+    .filter-actions {
+        display: flex;
+        gap: var(--sp-2);
+        align-items: flex-end;
+    }
+
+    .summary-card {
+        border-left: 3px solid var(--c-brand);
+        background: var(--c-surface);
+    }
+    .summary-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--c-muted);
+    }
+    .total-amount {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--c-success);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .table-modern thead th {
+        background: var(--c-surface-2);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--c-muted);
+        padding: 1rem 1rem;
+        border-bottom: 1px solid var(--c-border);
+        white-space: nowrap;
+    }
+    .table-modern tbody td {
+        padding: 1rem 1rem;
+        border-bottom: 1px solid var(--c-border-2);
+        vertical-align: middle;
+    }
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .table-modern tbody tr:hover {
+        background: var(--c-surface-2);
+    }
+
+    .ref-badge {
+        font-family: ui-monospace, monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--c-brand);
+        background: var(--c-brand-soft);
+        padding: 2px 8px;
+        border-radius: var(--r-sm);
+        display: inline-block;
+    }
+    .payment-mode-badge {
+        background: var(--c-brand-soft);
+        color: var(--c-brand);
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .amount-positive {
+        font-weight: 700;
+        color: var(--c-success);
+        white-space: nowrap;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+    .btn-icon-sm {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--c-border);
+        background: white;
+        color: var(--c-text-2);
+        transition: 0.15s;
+    }
+    .btn-icon-sm:hover {
+        background: var(--c-surface-2);
+        border-color: var(--c-brand);
+        color: var(--c-brand);
+    }
+    .btn-icon-sm.danger:hover {
+        border-color: var(--c-danger);
+        color: var(--c-danger);
+        background: var(--c-danger-soft);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--c-muted);
+    }
+    .empty-state i {
+        font-size: 3rem;
+        opacity: 0.3;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
     @@media (max-width: 768px) {
-        .table-mobile-hide {
-            display: none;
-        }
-        
-        .total-amount {
-            font-size: 1.2rem;
-        }
-        
-        .btn-brand, .btn-outline-success {
-            font-size: 0.75rem;
-            padding: 0.35rem 1rem;
-        }
+        .page-header-modern h4 { font-size: 1.3rem; }
+        .filter-form { flex-direction: column; align-items: stretch; }
+        .filter-actions { margin-top: var(--sp-2); }
+        .filter-actions .btn-custom { flex: 1; justify-content: center; }
+        .filter-group { min-width: auto; }
+        .table-mobile-hide { display: none; }
+        .total-amount { font-size: 1.2rem; }
+        .card-header { padding: var(--sp-3) var(--sp-4); }
+        .card-body { padding: var(--sp-4); }
     }
-    
-    /* Simple scrollbar */
-    .table-responsive::-webkit-scrollbar {
-        height: 6px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 3px;
+    @@media (max-width: 480px) {
+        .page-header-modern { flex-direction: column; align-items: stretch; }
+        .page-actions-modern { width: 100%; }
+        .page-actions-modern .btn-primary-modern,
+        .page-actions-modern .btn-outline-success-modern { flex: 1; justify-content: center; }
     }
 </style>
 
-<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div>
-        <h4>@(payRole == "Client" ? "My Payments" : $"Payments{(Model.CompanyName != null ? $" – {Model.CompanyName}" : "")}")</h4>
-        <p class="text-muted small mb-0">@(payRole == "Client" ? "Your payment history" : "All recorded income & payment receipts")</p>
-    </div>
-    @if (payRole != "Client")
-    {
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Export" asp-route-clientId="@Model.ClientId"
-           asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
-           class="btn btn-outline-success px-3" style="font-size:.83rem;">
-            <i class="bi bi-file-earmark-excel me-1"></i>Export
-        </a>
-        <a asp-controller="Payment" asp-action="Create" class="btn btn-brand px-4" style="font-size:.84rem;">
-            <i class="bi bi-plus me-1"></i>New Payment
-        </a>
-    </div>
-    }
-</div>
-
-<!-- Filters -->
-<div class="card mb-4 shadow-sm">
-    <div class="card-body py-3 px-4">
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-end filter-form">
-            <div style="min-width:200px;flex:1;">
-                <label class="form-label mb-1" style="font-size:.76rem;">Search Company</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white" style="border-right:none;"><i class="bi bi-search text-muted" style="font-size:.8rem;"></i></span>
-                    <input type="text" name="search" value="@Model.Search" class="form-control" style="border-left:none;" placeholder="Company or ref…" />
-                </div>
-            </div>
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">From Date</label>
-                <input type="date" name="dateFrom" value="@Model.DateFrom" class="form-control" />
-            </div>
-            <div style="min-width:110px;">
-                <label class="form-label mb-1" style="font-size:.76rem;">To Date</label>
-                <input type="date" name="dateTo" value="@Model.DateTo" class="form-control" />
-            </div>
-            @if (Model.ClientId.HasValue)
-            {
-                <input type="hidden" name="clientId" value="@Model.ClientId" />
-            }
-            <div class="d-flex gap-2 align-self-end">
-                <button type="submit" class="btn btn-brand px-3" style="font-size:.83rem;">Filter</button>
-                <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.83rem;">Reset</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Summary -->
-<div class="card mb-3 shadow-sm summary-card">
-    <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+<div class="payments-page">
+    <!-- ========== MODERN PAGE HEADER (from Inquiry) ========== -->
+    <div class="page-header-modern">
         <div>
-            <span class="summary-label">TOTAL TRANSACTIONS</span>
-            <div class="mt-1 fw-semibold" style="font-size:.85rem;">@Model.Payments.Count records</div>
+            <h4>
+                <i class="bi bi-cash-coin"></i>
+                @(payRole == "Client" ? "My Payments" : $"Payments{(Model.CompanyName != null ? $" – {Model.CompanyName}" : "")}")
+            </h4>
+            <p class="subtitle">@(payRole == "Client" ? "Your payment history" : "All recorded income & payment receipts")</p>
         </div>
-        <div class="total-amount">
-            ₹@Model.TotalAmount.ToString("N0")
+        <div class="page-actions-modern">
+            @if (payRole != "Client")
+            {
+                <a asp-action="Export" asp-route-clientId="@Model.ClientId"
+                   asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+                   class="btn-outline-success-modern">
+                    <i class="bi bi-file-earmark-excel"></i> Export
+                </a>
+                <a asp-controller="Payment" asp-action="Create" class="btn-primary-modern">
+                    <i class="bi bi-plus-lg"></i> New Payment
+                </a>
+            }
         </div>
     </div>
-</div>
 
-<!-- Table -->
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+    <!-- FILTER CARD -->
+    <div class="card-modern">
+        <div class="card-body">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <label class="filter-label"><i class="bi bi-search"></i> Search Company</label>
+                    <div class="input-group-icon">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" value="@Model.Search" class="filter-input" placeholder="Company or ref…" />
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label"><i class="bi bi-calendar3"></i> From Date</label>
+                    <input type="date" name="dateFrom" value="@Model.DateFrom" class="filter-input" />
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label"><i class="bi bi-calendar3"></i> To Date</label>
+                    <input type="date" name="dateTo" value="@Model.DateTo" class="filter-input" />
+                </div>
+                @if (Model.ClientId.HasValue)
+                {
+                    <input type="hidden" name="clientId" value="@Model.ClientId" />
+                }
+                <div class="filter-actions">
+                    <button type="submit" class="btn-secondary-modern">Filter</button>
+                    <a asp-action="Index" class="btn-secondary-modern">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div class="card-modern summary-card">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <div class="summary-label">TOTAL TRANSACTIONS</div>
+                <div class="mt-1 fw-semibold" style="font-size:0.85rem;">@Model.Payments.Count records</div>
+            </div>
+            <div class="total-amount">₹@Model.TotalAmount.ToString("N0")</div>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card-modern">
+        <div class="card-header">
+            <h6><i class="bi bi-receipt"></i> Payment Records</h6>
+        </div>
         @if (Model.Payments.Count == 0)
         {
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-cash-stack d-block mb-2" style="font-size:2.2rem;opacity:.25;"></i>
-                <span style="font-size:.84rem;">No payments found.</span>
+            <div class="empty-state">
+                <i class="bi bi-cash-stack"></i>
+                <span>No payments found.</span>
             </div>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-clean mb-0">
+                <table class="table-modern">
                     <thead>
                         <tr>
-                            <th style="width:50px">#</th>
+                            <th style="width:45px;">#</th>
                             <th class="table-mobile-hide">Ref</th>
                             <th>Company</th>
                             <th>Date</th>
                             <th class="table-mobile-hide">Note</th>
                             <th>Amount</th>
                             <th>Mode</th>
-                            <th class="text-end" style="width:110px">Actions</th>
+                            <th class="text-end" style="width:100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -452,38 +462,27 @@
                         {
                             <tr>
                                 <td class="text-muted fw-semibold">@sr</td>
-                                <td class="table-mobile-hide">
-                                    <span class="ref-code">@(p.ClientRef ?? "—")</span>
-                                </td>
+                                <td class="table-mobile-hide"><span class="ref-badge">@(p.ClientRef ?? "—")</span></td>
                                 <td class="fw-semibold">@(p.CompanyName ?? "—")</td>
-                                <td style="font-size:.8rem;">
-                                    <i class="bi bi-calendar3 me-1" style="font-size:.7rem;"></i>
-                                    @p.PaymentDate.ToString("dd MMM yyyy")
-                                </td>
-                                <td class="table-mobile-hide text-muted" style="font-size:.78rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="@p.Note">
-                                    @if (!string.IsNullOrEmpty(p.Note))
-                                    {
-                                        <i class="bi bi-chat-text me-1"></i>
-                                    }
+                                <td style="font-size:0.8rem;"><i class="bi bi-calendar3 me-1"></i> @p.PaymentDate.ToString("dd MMM yyyy")</td>
+                                <td class="table-mobile-hide text-muted" style="font-size:0.75rem; max-width:150px; overflow:hidden; text-overflow:ellipsis;" title="@p.Note">
+                                    @if (!string.IsNullOrEmpty(p.Note)) { <i class="bi bi-chat-text me-1"></i> }
                                     @(p.Note ?? "—")
                                 </td>
-                                <td style="font-weight:700;color:#16a34a;">₹@p.Amount.ToString("N0")</td>
+                                <td class="amount-positive">₹@p.Amount.ToString("N0")</td>
                                 <td>
                                     <span class="payment-mode-badge">
-                                        <i class="bi bi-wallet2 me-1" style="font-size:.7rem;"></i>
-                                        @p.PaymentMode
+                                        <i class="bi bi-wallet2"></i> @p.PaymentMode
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <div class="table-actions d-flex gap-1 justify-content-end">
-                                        <a asp-action="Details" asp-route-id="@p.Id"
-                                           class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View">
+                                    <div class="action-group">
+                                        <a asp-action="Details" asp-route-id="@p.Id" class="btn-icon-sm" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         @if (!string.IsNullOrEmpty(p.ProofFile))
                                         {
-                                            <a href="/uploads/payments/@p.ProofFile" target="_blank"
-                                               class="btn btn-sm btn-sm-icon btn-outline-secondary" title="View Proof">
+                                            <a href="/uploads/payments/@p.ProofFile" target="_blank" class="btn-icon-sm" title="View Proof">
                                                 <i class="bi bi-paperclip"></i>
                                             </a>
                                         }
@@ -491,7 +490,7 @@
                                         {
                                             <form asp-action="Delete" asp-route-id="@p.Id" method="post" class="d-inline"
                                                   onsubmit="return confirm('Remove this payment?')">
-                                                <button type="submit" class="btn btn-sm btn-sm-icon btn-outline-danger" title="Delete">
+                                                <button type="submit" class="btn-icon-sm danger" title="Delete">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </form>

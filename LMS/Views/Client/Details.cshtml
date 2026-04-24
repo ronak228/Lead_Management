@@ -5,166 +5,667 @@
     var userId = Context.Session.GetInt32("UserId");
     bool isStaff = role == "Admin" || role == "Employee";
     bool isOwnProfile = role == "Client" && userId == Model.Id;
+    var payments = ViewBag.Payments as List<Dictionary<string, object>> ?? new List<Dictionary<string, object>>();
+
+    // Safe progress calculation
+    decimal progressPct = Model.TotalAmount > 0
+        ? Math.Min(100, Math.Round((Model.TotalPaid / Model.TotalAmount) * 100, 1))
+        : 0;
+
+    // Initials helper
+    string initials = "?";
+    if (!string.IsNullOrWhiteSpace(Model.CompanyName))
+    {
+        var parts = Model.CompanyName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : Model.CompanyName.Substring(0, Math.Min(2, Model.CompanyName.Length)).ToUpper();
+    }
 }
 
-<div class="page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
-    <div>
-        <h4>@Model.CompanyName
-            <span style="font-family:monospace;font-size:.75rem;color:var(--brand);font-weight:700;margin-left:8px;">@Model.ClientRef</span>
-        </h4>
-        <p>Full client profile</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        @if (isOwnProfile)
-        {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-brand px-4" style="font-size:.84rem;">
-                <i class="bi bi-pencil me-1"></i>Edit Profile
-            </a>
-        }
-        <a asp-action="Index" class="btn btn-outline-secondary px-3" style="font-size:.84rem;">
-            <i class="bi bi-arrow-left me-1"></i>Back
-        </a>
-    </div>
-</div>
+<style>
+    .cp3 {
+        --c-brand: var(--brand, #2563eb);
+        --c-brand-soft: color-mix(in srgb, var(--c-brand) 8%, transparent);
+        --c-text: #111827;
+        --c-text-2: #374151;
+        --c-muted: #6b7280;
+        --c-muted-2: #9ca3af;
+        --c-bg: #ffffff;
+        --c-surface: #ffffff;
+        --c-surface-2: #f9fafb;
+        --c-border: #e5e7eb;
+        --c-border-2: #f3f4f6;
+        --c-success: #15803d;
+        --c-success-soft: #f0fdf4;
+        --c-danger: #b91c1c;
+        --c-danger-soft: #fef2f2;
+        --c-warn: #b45309;
+        --c-warn-soft: #fffbeb;
 
-<div class="row g-4">
-    <!-- Main details -->
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header-clean">
-                <h6><i class="bi bi-building me-2" style="color:var(--brand);"></i>@Model.CompanyName</h6>
-                <span class="@(Model.IsActive ? "badge-active" : "badge-inactive")">
-                    @(Model.IsActive ? "Active" : "Inactive")
-                </span>
+        --r-sm: 6px;
+        --r-md: 8px;
+        --r-lg: 12px;
+
+        --sp-1: 4px;
+        --sp-2: 8px;
+        --sp-3: 12px;
+        --sp-4: 16px;
+        --sp-5: 20px;
+        --sp-6: 24px;
+        --sp-7: 32px;
+        --sp-8: 40px;
+
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--c-text);
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: clamp(16px, 3vw, 28px);
+        box-sizing: border-box;
+        line-height: 1.5;
+    }
+    .cp3 *, .cp3 *::before, .cp3 *::after { box-sizing: border-box; min-width: 0; }
+    .cp3 h1, .cp3 h2, .cp3 h3, .cp3 h4 { margin: 0; font-weight: 600; color: var(--c-text); }
+
+    /* ---------- Breadcrumb ---------- */
+    .cp3-crumb {
+        font-size: 13px;
+        color: var(--c-muted);
+        margin-bottom: var(--sp-4);
+    }
+    .cp3-crumb a { color: var(--c-muted); text-decoration: none; }
+    .cp3-crumb a:hover { color: var(--c-brand); }
+    .cp3-crumb .sep { margin: 0 8px; color: var(--c-muted-2); }
+
+    /* ---------- Page header ---------- */
+    .cp3-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-4);
+        padding-bottom: var(--sp-5);
+        border-bottom: 1px solid var(--c-border);
+        margin-bottom: var(--sp-6);
+    }
+    .cp3-head-left { display: flex; align-items: center; gap: var(--sp-4); min-width: 0; flex: 1; }
+    .cp3-avatar {
+        width: 56px; height: 56px;
+        border-radius: var(--r-md);
+        background: var(--c-brand-soft);
+        color: var(--c-brand);
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+        font-size: 18px;
+        letter-spacing: .02em;
+        flex-shrink: 0;
+        border: 1px solid color-mix(in srgb, var(--c-brand) 20%, transparent);
+    }
+    .cp3-head-info { min-width: 0; }
+    .cp3-title {
+        font-size: clamp(18px, 2.2vw, 22px);
+        font-weight: 600;
+        color: var(--c-text);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--sp-3);
+        margin-bottom: 4px;
+    }
+    .cp3-ref {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--c-brand);
+        background: var(--c-brand-soft);
+        padding: 2px 8px;
+        border-radius: var(--r-sm);
+    }
+    .cp3-sub {
+        font-size: 13px;
+        color: var(--c-muted);
+    }
+
+    .cp3-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+    .cp3-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: var(--r-md);
+        border: 1px solid var(--c-border);
+        background: var(--c-surface);
+        color: var(--c-text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all .15s ease;
+        white-space: nowrap;
+        line-height: 1;
+    }
+    .cp3-btn:hover { border-color: var(--c-muted-2); color: var(--c-text); background: var(--c-surface-2); }
+    .cp3-btn-primary {
+        background: var(--c-brand);
+        border-color: var(--c-brand);
+        color: #fff;
+    }
+    .cp3-btn-primary:hover {
+        background: color-mix(in srgb, var(--c-brand) 88%, #000);
+        border-color: color-mix(in srgb, var(--c-brand) 88%, #000);
+        color: #fff;
+    }
+
+    /* Status pill (top-right of header) */
+    .cp3-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 999px;
+        line-height: 1;
+    }
+    .cp3-status .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .cp3-status.active   { background: var(--c-success-soft); color: var(--c-success); }
+    .cp3-status.active   .dot { background: var(--c-success); }
+    .cp3-status.inactive { background: var(--c-danger-soft); color: var(--c-danger); }
+    .cp3-status.inactive .dot { background: var(--c-danger); }
+
+    /* Layout grid */
+    .cp3-grid {
+        display: grid;
+        gap: var(--sp-5);
+        grid-template-columns: 1fr;
+    }
+    @@media (min-width: 960px) {
+        .cp3-grid-main { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+    }
+
+    /* Card */
+    .cp3-card {
+        background: var(--c-surface);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-lg);
+        overflow: hidden;
+    }
+    .cp3-card-head {
+        padding: var(--sp-4) var(--sp-5);
+        border-bottom: 1px solid var(--c-border-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        flex-wrap: wrap;
+    }
+    .cp3-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--c-text);
+        letter-spacing: .005em;
+    }
+    .cp3-card-body { padding: var(--sp-5); }
+
+    /* Fields grid */
+    .cp3-fields {
+        display: grid;
+        gap: var(--sp-5) var(--sp-6);
+        grid-template-columns: 1fr;
+    }
+    @@media (min-width: 560px) { .cp3-fields { grid-template-columns: 1fr 1fr; } }
+    @@media (min-width: 1100px){ .cp3-fields { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .cp3-field { min-width: 0; }
+    .cp3-field-label {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--c-muted);
+        margin-bottom: 4px;
+    }
+    .cp3-field-value {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--c-text);
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .cp3-field-value.mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        color: var(--c-brand);
+    }
+    .cp3-field-value.muted { color: var(--c-muted); font-weight: 400; }
+    .cp3-field-value a { color: var(--c-brand); text-decoration: none; }
+    .cp3-field-value a:hover { text-decoration: underline; }
+
+    /* Section divider */
+    .cp3-section {
+        margin-top: var(--sp-6);
+        padding-top: var(--sp-5);
+        border-top: 1px solid var(--c-border-2);
+    }
+    .cp3-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--c-muted);
+        margin-bottom: var(--sp-3);
+    }
+
+    .cp3-login-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--c-success-soft);
+        border: 1px solid color-mix(in srgb, var(--c-success) 25%, transparent);
+        color: var(--c-success);
+        border-radius: var(--r-md);
+        font-size: 13px;
+        font-weight: 500;
+        word-break: break-all;
+    }
+    .cp3-login-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c-success); flex-shrink: 0; }
+
+    .cp3-notes {
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border-2);
+        border-radius: var(--r-md);
+        padding: var(--sp-4);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--c-text-2);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* Quick Contact */
+    .cp3-contact-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+    .cp3-contact-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        padding: 10px 12px;
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        text-decoration: none;
+        color: var(--c-text);
+        font-size: 13px;
+        transition: all .15s ease;
+        background: var(--c-surface);
+    }
+    .cp3-contact-item:hover {
+        border-color: var(--c-brand);
+        background: var(--c-brand-soft);
+        color: var(--c-brand);
+    }
+    .cp3-contact-icon {
+        width: 32px; height: 32px;
+        border-radius: var(--r-sm);
+        background: var(--c-surface-2);
+        display: grid; place-items: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    .cp3-contact-meta { min-width: 0; flex: 1; }
+    .cp3-contact-label { font-size: 11px; color: var(--c-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .cp3-contact-value { font-size: 13px; font-weight: 500; word-break: break-all; }
+
+    /* Payment summary */
+    .cp3-stats {
+        display: grid;
+        gap: var(--sp-4);
+        grid-template-columns: 1fr;
+    }
+    @@media (min-width: 540px) { .cp3-stats { grid-template-columns: repeat(3, 1fr); } }
+
+    .cp3-stat {
+        padding: var(--sp-4);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-md);
+        background: var(--c-surface);
+    }
+    .cp3-stat-label {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--c-muted);
+        margin-bottom: 6px;
+    }
+    .cp3-stat-value {
+        font-size: clamp(18px, 2.4vw, 22px);
+        font-weight: 600;
+        color: var(--c-text);
+        word-break: break-word;
+    }
+    .cp3-stat.paid      .cp3-stat-value { color: var(--c-success); }
+    .cp3-stat.remaining .cp3-stat-value { color: var(--c-warn); }
+
+    /* Progress bar */
+    .cp3-progress-wrap { margin-top: var(--sp-5); }
+    .cp3-progress-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+    }
+    .cp3-progress-label { font-size: 12px; color: var(--c-muted); }
+    .cp3-progress-pct { font-size: 13px; font-weight: 600; color: var(--c-text); }
+    .cp3-progress-bar {
+        height: 6px;
+        width: 100%;
+        background: var(--c-border-2);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .cp3-progress-fill {
+        height: 100%;
+        background: var(--c-brand);
+        border-radius: 999px;
+        transition: width .6s ease;
+    }
+
+    /* Transactions table */
+    .cp3-empty {
+        text-align: center;
+        padding: var(--sp-7) var(--sp-4);
+        color: var(--c-muted);
+        font-size: 13.5px;
+    }
+    .cp3-empty-icon {
+        font-size: 32px;
+        opacity: .3;
+        margin-bottom: var(--sp-2);
+    }
+    .cp3-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .cp3-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+        min-width: 480px;
+    }
+    .cp3-table th, .cp3-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--c-border-2);
+        vertical-align: middle;
+    }
+    .cp3-table thead th {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--c-muted);
+        background: var(--c-surface-2);
+        border-bottom: 1px solid var(--c-border);
+    }
+    .cp3-table tbody tr:last-child td { border-bottom: none; }
+    .cp3-table tbody tr:hover { background: var(--c-surface-2); }
+    .cp3-amt { font-weight: 600; color: var(--c-success); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .cp3-mode {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border);
+        border-radius: var(--r-sm);
+        font-size: 12px;
+        color: var(--c-text-2);
+    }
+    .cp3-count-pill {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--c-muted);
+        background: var(--c-surface-2);
+        padding: 3px 8px;
+        border-radius: 999px;
+    }
+
+    /* ========== MOBILE: Buttons on top ========== */
+    @@media (max-width: 640px) {
+        .cp3-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .cp3-actions {
+            order: -1;                /* move buttons above avatar */
+            margin-bottom: var(--sp-4);
+            width: 100%;
+        }
+        .cp3-actions .cp3-btn {
+            flex: 1;
+            justify-content: center;
+        }
+        .cp3-head-left {
+            width: 100%;
+        }
+        .cp3-hide-sm { display: none; }
+        .cp3-table { min-width: 0; }
+        .cp3-table th, .cp3-table td { padding: 10px 12px; }
+    }
+
+    /* Extra small devices */
+    @@media (max-width: 520px) {
+        .cp3-hide-sm { display: none; }
+        .cp3-table { min-width: 0; }
+        .cp3-table th, .cp3-table td { padding: 10px 12px; }
+    }
+</style>
+
+<div class="cp3">
+
+    <!-- Breadcrumb -->
+    <div class="cp3-crumb">
+        <a asp-action="Index">Clients</a>
+        <span class="sep">/</span>
+        <span>@Model.CompanyName</span>
+    </div>
+
+    <!-- Header (actions now appear above on mobile) -->
+    <div class="cp3-header">
+        <div class="cp3-head-left">
+            <div class="cp3-avatar">@initials</div>
+            <div class="cp3-head-info">
+                <div class="cp3-title">
+                    <span>@Model.CompanyName</span>
+                    <span class="cp3-ref">@Model.ClientRef</span>
+                    <span class="cp3-status @(Model.IsActive ? "active" : "inactive")">
+                        <span class="dot"></span>
+                        @(Model.IsActive ? "Active" : "Inactive")
+                    </span>
+                </div>
+                <div class="cp3-sub">@Model.ContactPerson · @(Model.CityName ?? "—")</div>
             </div>
-            <div class="card-body p-4">
-                <div class="row g-3">
+        </div>
+        <div class="cp3-actions">
+            <a asp-action="Index" class="cp3-btn">← Back</a>
+            @if (isOwnProfile)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="cp3-btn cp3-btn-primary">Edit Profile</a>
+            }
+        </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="cp3-grid cp3-grid-main">
+
+        <!-- Left column: client details -->
+        <div class="cp3-card">
+            <div class="cp3-card-head">
+                <h3 class="cp3-card-title">Client Information</h3>
+            </div>
+            <div class="cp3-card-body">
+                <div class="cp3-fields">
                     @{
-                        void Field(string label, string? value)
+                        void Field(string label, string? value, bool mono = false)
                         {
-                            <div class="col-sm-6">
-                                <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">@label</div>
-                                <div style="font-size:.88rem;font-weight:500;">@(value ?? "—")</div>
+                            <div class="cp3-field">
+                                <div class="cp3-field-label">@label</div>
+                                <div class="cp3-field-value @(mono ? "mono" : "") @(string.IsNullOrWhiteSpace(value) ? "muted" : "")">
+                                    @(string.IsNullOrWhiteSpace(value) ? "—" : value)
+                                </div>
                             </div>
                         }
                     }
-                    @{ Field("Client ID",      Model.ClientRef); }
+                    @{ Field("Client ID",      Model.ClientRef, true); }
                     @{ Field("Company Name",   Model.CompanyName); }
                     @{ Field("Contact Person", Model.ContactPerson); }
                     @{ Field("Phone",          Model.Phone); }
                     @{ Field("Email",          Model.Email); }
-                    @if (isStaff && !string.IsNullOrWhiteSpace(Model.Email))
-                    {
-                        <div class="col-sm-6">
-                            <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:3px;">Login Account</div>
-                            <div style="font-size:.88rem;font-weight:500;">
-                                <span class="badge text-bg-success" style="font-size:.77rem;"><i class="bi bi-person-check me-1"></i>Active — @Model.Email</span>
-                            </div>
-                        </div>
-                    }
                     @{ Field("City",           Model.CityName); }
                     @{ Field("Module",         Model.ModuleName); }
                     @{ Field("Address",        Model.Address); }
                     @{ Field("Added By",       Model.CreatedByName); }
                     @{ Field("Created",        Model.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")); }
                 </div>
+
+                @if (isStaff && !string.IsNullOrWhiteSpace(Model.Email))
+                {
+                    <div class="cp3-section">
+                        <div class="cp3-section-title">Login Account</div>
+                        <span class="cp3-login-pill">
+                            <span class="dot"></span>
+                            Active — @Model.Email
+                        </span>
+                    </div>
+                }
+
                 @if (!string.IsNullOrWhiteSpace(Model.Notes))
                 {
-                    <hr style="border-color:var(--border);" />
-                    <div>
-                        <div style="font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;">Notes</div>
-                        <p style="font-size:.88rem;margin:0;color:var(--text-main);">@Model.Notes</p>
+                    <div class="cp3-section">
+                        <div class="cp3-section-title">Notes</div>
+                        <div class="cp3-notes">@Model.Notes</div>
                     </div>
                 }
             </div>
         </div>
-    </div>
 
-    <!-- Side card -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="text-center mb-3">
-                    <div style="width:64px;height:64px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:1.4rem;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
-                        @(Model.CompanyName.Length > 0 ? Model.CompanyName[0].ToString().ToUpper() : "?")
-                    </div>
-                    <div style="font-weight:700;font-size:1rem;">@Model.CompanyName</div>
-                    <div style="font-size:.8rem;color:var(--text-muted);">@Model.ContactPerson</div>
-                    <div style="font-family:monospace;font-size:.76rem;color:var(--brand);font-weight:700;">@Model.ClientRef</div>
+        <!-- Right column: quick contact -->
+        <div class="cp3-card">
+            <div class="cp3-card-head">
+                <h3 class="cp3-card-title">Quick Contact</h3>
+            </div>
+            <div class="cp3-card-body">
+                <div class="cp3-contact-list">
+                    @if (!string.IsNullOrWhiteSpace(Model.Phone))
+                    {
+                        <a href="tel:@Model.Phone" class="cp3-contact-item">
+                            <div class="cp3-contact-icon">📞</div>
+                            <div class="cp3-contact-meta">
+                                <div class="cp3-contact-label">Phone</div>
+                                <div class="cp3-contact-value">@Model.Phone</div>
+                            </div>
+                        </a>
+                    }
                     @if (!string.IsNullOrWhiteSpace(Model.Email))
-                    {<div style="font-size:.78rem;color:var(--text-muted);">@Model.Email</div>}
+                    {
+                        <a href="mailto:@Model.Email" class="cp3-contact-item">
+                            <div class="cp3-contact-icon">✉️</div>
+                            <div class="cp3-contact-meta">
+                                <div class="cp3-contact-label">Email</div>
+                                <div class="cp3-contact-value">@Model.Email</div>
+                            </div>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Address))
+                    {
+                        <div class="cp3-contact-item" style="cursor:default;">
+                            <div class="cp3-contact-icon">📍</div>
+                            <div class="cp3-contact-meta">
+                                <div class="cp3-contact-label">Address</div>
+                                <div class="cp3-contact-value" style="font-weight:400;">@Model.Address</div>
+                            </div>
+                        </div>
+                    }
+                    @if (string.IsNullOrWhiteSpace(Model.Phone) && string.IsNullOrWhiteSpace(Model.Email) && string.IsNullOrWhiteSpace(Model.Address))
+                    {
+                        <div class="cp3-empty" style="padding:20px 0;">No contact info available.</div>
+                    }
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-@{
-    var payments = ViewBag.Payments as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
-}
-
-<div class="row g-4 mt-2">
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header-clean">
-                <h6><i class="bi bi-cash-stack me-2" style="color:var(--brand);"></i>Payment Summary</h6>
+    <!-- Payment Summary -->
+    <div style="margin-top: var(--sp-5);">
+        <div class="cp3-card">
+            <div class="cp3-card-head">
+                <h3 class="cp3-card-title">Payment Summary</h3>
             </div>
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-muted" style="font-size:.82rem;">Contract Total</span>
-                    <strong>₹@Model.TotalAmount.ToString("N0")</strong>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-muted" style="font-size:.82rem;">Paid So Far</span>
-                    <strong class="text-success">₹@Model.TotalPaid.ToString("N0")</strong>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-muted" style="font-size:.82rem;">Remaining</span>
-                    <strong class="text-danger">₹@Model.TotalRemaining.ToString("N0")</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header-clean">
-                <h6><i class="bi bi-receipt-cutoff me-2" style="color:var(--brand);"></i>Transaction History</h6>
-            </div>
-            <div class="card-body p-0">
-                @if (!payments.Any())
-                {
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox d-block mb-2" style="font-size:2rem;opacity:.25;"></i>
-                        <span style="font-size:.82rem;">No payments recorded yet.</span>
+            <div class="cp3-card-body">
+                <div class="cp3-stats">
+                    <div class="cp3-stat">
+                        <div class="cp3-stat-label">Contract Total</div>
+                        <div class="cp3-stat-value">₹@Model.TotalAmount.ToString("N0")</div>
                     </div>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-clean mb-0">
-                            <thead>
+                    <div class="cp3-stat paid">
+                        <div class="cp3-stat-label">Paid So Far</div>
+                        <div class="cp3-stat-value">₹@Model.TotalPaid.ToString("N0")</div>
+                    </div>
+                    <div class="cp3-stat remaining">
+                        <div class="cp3-stat-label">Remaining</div>
+                        <div class="cp3-stat-value">₹@Model.TotalRemaining.ToString("N0")</div>
+                    </div>
+                </div>
+
+                <div class="cp3-progress-wrap">
+                    <div class="cp3-progress-head">
+                        <span class="cp3-progress-label">Payment Progress</span>
+                        <span class="cp3-progress-pct">@progressPct%</span>
+                    </div>
+                    <div class="cp3-progress-bar">
+                        <div class="cp3-progress-fill" style="width: @(progressPct)%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div style="margin-top: var(--sp-5);">
+        <div class="cp3-card">
+            <div class="cp3-card-head">
+                <h3 class="cp3-card-title">Transaction History</h3>
+                <span class="cp3-count-pill">@payments.Count @(payments.Count == 1 ? "entry" : "entries")</span>
+            </div>
+            @if (!payments.Any())
+            {
+                <div class="cp3-empty">
+                    <div class="cp3-empty-icon">📭</div>
+                    <div>No payments recorded yet.</div>
+                </div>
+            }
+            else
+            {
+                <div class="cp3-table-wrap">
+                    <table class="cp3-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Mode</th>
+                                <th class="cp3-hide-sm">Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in payments)
+                            {
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Mode</th>
-                                    <th class="table-mobile-hide">Note</th>
+                                    <td>@Convert.ToDateTime(payment["payment_date"]).ToString("dd MMM yyyy")</td>
+                                    <td class="cp3-amt">₹@Convert.ToDecimal(payment["amount"]).ToString("N0")</td>
+                                    <td><span class="cp3-mode">@payment["payment_mode"]</span></td>
+                                    <td class="cp3-hide-sm" style="color:var(--c-muted);">@(payment["note"]?.ToString() ?? "—")</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var payment in payments)
-                                {
-                                    <tr>
-                                        <td style="font-size:.8rem;">@Convert.ToDateTime(payment["payment_date"]).ToString("dd MMM yyyy")</td>
-                                        <td style="font-weight:700;color:#16a34a;">₹@Convert.ToDecimal(payment["amount"]).ToString("N0")</td>
-                                        <td style="font-size:.83rem;">@payment["payment_mode"]</td>
-                                        <td class="table-mobile-hide text-muted" style="font-size:.78rem;">@(payment["note"]?.ToString() ?? "—")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 </div>
